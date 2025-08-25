@@ -1,0 +1,12 @@
+transformers
+prefect
+mlflow
+streamlit
+faiss-cpu
+chromadb
+fastapi
+uvicorn
+scikit-learn
+pandas
+numpy
+matplotlib
