@@ -1,0 +1,208 @@
+{
+  "Apple": {
+    "Apple scab": {
+      "matched_title": "Apple scab",
+      "description": "Gala is an apple cultivar with a sweet, mild flavor, a crisp but not hard texture, and a striped or mottled orange or reddish appearance. Originating from New Zealand in the 1930s, similar to most named apples it is clonally propagated. Easy to grow, the Gala is one of the top commercial apple varieties today and one of the most popular in North America.",
+      "source": "https://en.wikipedia.org/wiki/Apple_Apple_scab"
+    },
+    "Black rot": {
+      "matched_title": "Black rot",
+      "description": "Black rot is a name used for various diseases of cultivated plants caused by fungi or bacteria, producing dark brown discoloration and decay in the leaves of fruit and vegetables:\nA disease of the apple, pear and quince caused by a fungus (Botryosphaeria obtusa or Physalospora cydoniae)\nA disease of grape vines caused by a fungus (Guignardia bidwellii), affecting the aboveground part of the vine, and favored by warm, humid weather; also called grape rot\nA disease of cabbage and related plants caused by a bacterium known as Xanthomonas campestris (Xanthomonas campestris pv. campestris). Occurring around the world, it affects primarily the aboveground parts of plants.",
+      "source": "https://en.wikipedia.org/wiki/Apple_Black_rot"
+    },
+    "Cedar apple rust": {
+      "matched_title": "Cedar apple rust",
+      "description": "Gymnosporangium juniperi-virginianae is a plant pathogen that causes cedar-apple rust. In virtually any location where apples or crabapples (Malus) and eastern red cedar (Juniperus virginiana) coexist, cedar apple rust can be a destructive or disfiguring disease on both the apples and cedars. Apples, crabapples, and eastern red cedar are the most common hosts for this disease.",
+      "source": "https://en.wikipedia.org/wiki/Apple_Cedar_apple_rust"
+    },
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Apple sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/apple/infos"
+    }
+  },
+  "Blueberry": {
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Blueberry sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/blueberry/infos"
+    }
+  },
+  "Cherry (including sour)": {
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Cherry (including sour) sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/cherry/infos"
+    },
+    "Powdery mildew": {
+      "matched_title": "Powdery mildew",
+      "description": "⚠️ No description found yet.",
+      "source": "https://plantvillage.psu.edu/topics/cherry/infos"
+    }
+  },
+  "Corn (maize)": {
+    "Cercospora leaf spot Gray leaf spot": {
+      "matched_title": "Cercospora leaf spot Gray leaf spot",
+      "description": "⚠️ No description found yet.",
+      "source": "https://plantvillage.psu.edu/topics/maize/infos"
+    },
+    "Common rust": {
+      "matched_title": "Common rust",
+      "description": "Puccinia sorghi, or common rust of maize, is a species of rust fungus that infects corn and species from the plant genus Oxalis.\n\n\n== Host and symptoms ==\nPuccinia sorghi often first appears after silking in maize. The first early symptom includes chlorotic specks on the leaf.",
+      "source": "https://en.wikipedia.org/wiki/Corn_(maize)_Common_rust"
+    },
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Corn (maize) sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/maize/infos"
+    },
+    "Northern Leaf Blight": {
+      "matched_title": "Northern Leaf Blight",
+      "description": "Southern corn leaf blight (SCLB) is a fungal disease of maize caused by the plant pathogen  Bipolaris maydis (also known as Cochliobolus heterostrophus in its \nteleomorph state).\nThe fungus is an Ascomycete and can use conidia or ascospores to infect. There are three races of B. maydis: Race O, Race C, and Race T; SCLB symptoms vary depending on the infectious pathogen's race.",
+      "source": "https://en.wikipedia.org/wiki/Corn_(maize)_Northern_Leaf_Blight"
+    }
+  },
+  "Grape": {
+    "Black rot": {
+      "matched_title": "Black rot",
+      "description": "Grape black rot is a fungal disease caused by an ascomycetous fungus, Guignardia bidwellii, that attacks grape vines during hot and humid weather. The disease \"originated in eastern North America, but now occurs in portions of Europe, South America, and Asia. It can cause complete crop loss in warm, humid climates, but is virtually unknown in regions with arid summers.\" The name comes from the black fringe that borders growing brown patches on the leaves.",
+      "source": "https://en.wikipedia.org/wiki/Grape_Black_rot"
+    },
+    "Esca (Black Measles)": {
+      "matched_title": "Esca (Black Measles)",
+      "description": "⚠️ No description found yet.",
+      "source": "https://plantvillage.psu.edu/topics/grape/infos"
+    },
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Grape sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/grape/infos"
+    },
+    "Leaf blight (Isariopsis Leaf Spot)": {
+      "matched_title": "Leaf blight (Isariopsis Leaf Spot)",
+      "description": "Campbell Early is a hybrid table grape cultivar (Vitis × labruscana). It is also known by several other names, including Boscoso, Island Belle, Campbell's Early, and Early Campbell. Its fruits are prized for their attractive appearance and sweetness.",
+      "source": "https://en.wikipedia.org/wiki/Grape_Leaf_blight_(Isariopsis_Leaf_Spot)"
+    }
+  },
+  "Orange": {
+    "Haunglongbing (Citrus greening)": {
+      "matched_title": "Haunglongbing (Citrus greening)",
+      "description": "Citrus greening disease (Chinese: 黃龍病; pinyin: huánglóngbìng abbr. HLB) is a disease of citrus caused by a vector-transmitted pathogen. The causative agents are motile bacteria, Liberibacter spp.",
+      "source": "https://en.wikipedia.org/wiki/Orange_huanglongbing_(citrus_greening)"
+    }
+  },
+  "Peach": {
+    "Bacterial spot": {
+      "matched_title": "Bacterial spot",
+      "description": "Bacterial leaf scorch (commonly abbreviated BLS, also called bacterial leaf spot) is a disease state affecting many crops, caused mainly by the xylem-plugging bacterium Xylella fastidiosa. It can be mistaken for ordinary leaf scorch caused by cultural practices such as over-fertilization.\n\n\n== Hosts ==\nBLS can be found on a wide variety of hosts, ranging from ornamental trees (elm, maple, oak) and shrubs, to crop species including blueberry and almond.",
+      "source": "https://en.wikipedia.org/wiki/Peach_Bacterial_spot"
+    },
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Peach sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/peach/infos"
+    }
+  },
+  "Potato": {
+    "Early blight": {
+      "matched_title": "Early blight",
+      "description": "Phytophthora infestans is an oomycete or water mold, a fungus-like microorganism that causes the serious potato and tomato disease known as late blight or potato blight. Early blight, caused by Alternaria solani, is also often called \"potato blight\". Late blight was a major culprit in the 1840s European, the 1845–1852 Irish, and the 1846 Highland potato famines.",
+      "source": "https://en.wikipedia.org/wiki/Potato_Early_blight"
+    },
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Potato sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/potato/infos"
+    },
+    "Late blight": {
+      "matched_title": "Late blight",
+      "description": "Phytophthora infestans is an oomycete or water mold, a fungus-like microorganism that causes the serious potato and tomato disease known as late blight or potato blight. Early blight, caused by Alternaria solani, is also often called \"potato blight\". Late blight was a major culprit in the 1840s European, the 1845–1852 Irish, and the 1846 Highland potato famines.",
+      "source": "https://en.wikipedia.org/wiki/Potato_Late_blight"
+    }
+  },
+  "Raspberry": {
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Raspberry sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/raspberry/infos"
+    }
+  },
+  "Soybean": {
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Soybean sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/soybean/infos"
+    }
+  },
+  "Squash": {
+    "Powdery mildew": {
+      "matched_title": "Powdery mildew",
+      "description": "Powdery mildew is a fungal disease that affects a wide range of plants. Powdery mildew diseases are caused by many different species of ascomycete fungi in the order Erysiphales. Powdery mildew is one of the easier plant diseases to identify, as the signs of the causal pathogen are quite distinctive.",
+      "source": "https://en.wikipedia.org/wiki/Squash_Powdery_mildew"
+    }
+  },
+  "Strawberry": {
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Strawberry sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/strawberry/infos"
+    },
+    "Leaf scorch": {
+      "matched_title": "Leaf scorch",
+      "description": "Diplocarpon earlianum is a species of fungus that causes disease in strawberry plants called strawberry leaf scorch. The disease overwinters in plant debris and infects strawberry plants during the spring season when it is wet. The five main methods to reduce strawberry leaf scorch include: irrigation techniques, crop rotation, planting resistant and disease-free seeds, fungicide use, and sanitation measures.",
+      "source": "https://en.wikipedia.org/wiki/Strawberry_Leaf_scorch"
+    }
+  },
+  "Tomato": {
+    "Bacterial spot": {
+      "matched_title": "Bacterial spot",
+      "description": "Bacterial leaf spot on peppers and tomatoes is caused by a gram-negative and rod-shaped bacterium in the genus Xanthomonas. It causes symptoms throughout the above-ground portion of the plant including leaf spots, fruit spots and stem cankers. There are four pathovars classified in three different species that can cause this disease, named by alphabetical groups.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Bacterial_spot"
+    },
+    "Early blight": {
+      "matched_title": "Early blight",
+      "description": "Alternaria solani is a fungal pathogen that produces a disease in tomato and potato plants called early blight. The pathogen produces distinctive \"bullseye\" patterned leaf spots and can also cause stem lesions and fruit rot on tomato and tuber blight on potato. Despite the name \"early\", foliar symptoms usually occur on older leaves.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Early_blight"
+    },
+    "healthy": {
+      "matched_title": "healthy",
+      "description": "Tomato sample labeled healthy (no disease symptoms).",
+      "source": "https://plantvillage.psu.edu/topics/tomato/infos"
+    },
+    "Late blight": {
+      "matched_title": "Late blight",
+      "description": "Phytophthora infestans is an oomycete or water mold, a fungus-like microorganism that causes the serious potato and tomato disease known as late blight or potato blight. Early blight, caused by Alternaria solani, is also often called \"potato blight\". Late blight was a major culprit in the 1840s European, the 1845–1852 Irish, and the 1846 Highland potato famines.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Late_blight"
+    },
+    "Leaf Mold": {
+      "matched_title": "Leaf Mold",
+      "description": "Cladosporium fulvum is an Ascomycete called Passalora fulva, a non-obligate pathogen that causes the disease on tomatoes known as the tomato leaf mold. P. fulva only attacks tomato plants, especially the foliage, and it is a common disease in greenhouses, but can also occur in the field. The pathogen is likely to grow in humid and cool conditions.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Leaf_Mold"
+    },
+    "Septoria leaf spot": {
+      "matched_title": "Septoria leaf spot",
+      "description": "A leaf spot is a limited, discoloured, diseased area of a leaf that is caused by fungal, bacterial or viral plant diseases, or by injuries from nematodes, insects, environmental factors, toxicity or herbicides. These discoloured spots or lesions often have a centre of necrosis (cell death). Symptoms can overlap across causal agents, however differing signs and symptoms of certain pathogens can lead to the diagnosis of the type of leaf spot disease.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Septoria_leaf_spot"
+    },
+    "Spider mites Two-spotted spider mite": {
+      "matched_title": "Spider mites Two-spotted spider mite",
+      "description": "Spider mites are members of the family Tetranychidae, which includes about 1,200 species. They are part of the subclass Acari (mites). Spider mites generally live on the undersides of leaves of plants, where they may spin protective silk webs, and can cause damage by puncturing the plant cells to feed.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Spider_mites_Two-spotted_spider_mite"
+    },
+    "Target Spot": {
+      "matched_title": "Target Spot",
+      "description": "⚠️ No description found yet.",
+      "source": "https://plantvillage.psu.edu/topics/tomato/infos"
+    },
+    "Tomato mosaic virus": {
+      "matched_title": "Tomato mosaic virus",
+      "description": "Campari is a type of hybrid tomato noted for its juiciness, high sugar level, low acidity, and lack of mealiness. Camparis are deep red and larger than a pear or cherry tomato, but smaller and rounder than common plum tomatoes. They are often sold as \"tomato-on-the-vine\" (TOV) in supermarkets, a category of tomato that has become increasingly popular over the years.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Tomato_mosaic_virus"
+    },
+    "Tomato Yellow Leaf Curl Virus": {
+      "matched_title": "Tomato Yellow Leaf Curl Virus",
+      "description": "The tomatillo (Physalis philadelphica and Physalis ixocarpa), also known as the Mexican husk tomato, is a plant of the nightshade family bearing small, spherical, and green or green-purple fruit. Tomatillos originated in Mexico and were cultivated in the pre-Columbian era. A staple of Mexican cuisine, they are eaten raw and cooked in a variety of dishes, particularly salsa verde.",
+      "source": "https://en.wikipedia.org/wiki/Tomato_Tomato_Yellow_Leaf_Curl_Virus"
+    }
+  }
+}

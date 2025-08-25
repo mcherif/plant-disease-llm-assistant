@@ -10,3 +10,8 @@ scikit-learn
 pandas
 numpy
 matplotlib
+torch
+wikipedia
+beautifulsoup4
+tqdm
+requests
