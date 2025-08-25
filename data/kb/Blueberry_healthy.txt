@@ -1,0 +1,3 @@
+# Source: dataset:label
+
+Blueberry sample labeled healthy (no disease symptoms).
