@@ -1,0 +1,38 @@
+Apple___Apple_scab	Apple Apple scab	Apple_Apple_scab.txt	wikipedia:Gala (apple)
+Apple___Black_rot	Apple Black rot	Apple_Black_rot.txt	wikipedia:Black rot
+Apple___Cedar_apple_rust	Apple Cedar apple rust	Apple_Cedar_apple_rust.txt	wikipedia:Gymnosporangium juniperi-virginianae
+Apple___healthy	Apple healthy	Apple_healthy.txt	dataset:label
+Blueberry___healthy	Blueberry healthy	Blueberry_healthy.txt	dataset:label
+Cherry_(including_sour)___Powdery_mildew	Cherry (including sour) Powdery mildew	Cherry_including_sour_Powdery_mildew.txt	wikipedia:Cherry leaf spot
+Cherry_(including_sour)___healthy	Cherry (including sour) healthy	Cherry_including_sour_healthy.txt	dataset:label
+Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot	Corn (maize) Cercospora leaf spot Gray leaf spot	Corn_maize_Cercospora_leaf_spot_Gray_leaf_spot.txt	wikipedia:Corn grey leaf spot
+Corn_(maize)___Common_rust_	Corn (maize) Common rust	Corn_maize_Common_rust.txt	wikipedia:Puccinia sorghi
+Corn_(maize)___Northern_Leaf_Blight	Corn (maize) Northern Leaf Blight	Corn_maize_Northern_Leaf_Blight.txt	wikipedia:Southern corn leaf blight
+Corn_(maize)___healthy	Corn (maize) healthy	Corn_maize_healthy.txt	dataset:label
+Grape___Black_rot	Grape Black rot	Grape_Black_rot.txt	wikipedia:Black rot (grape disease)
+Grape___Esca_(Black_Measles)	Grape Esca (Black Measles)	Grape_Esca_Black_Measles.txt	wikipedia:List of grape diseases
+Grape___Leaf_blight_(Isariopsis_Leaf_Spot)	Grape Leaf blight (Isariopsis Leaf Spot)	Grape_Leaf_blight_Isariopsis_Leaf_Spot.txt	wikipedia:Campbell Early
+Grape___healthy	Grape healthy	Grape_healthy.txt	dataset:label
+Orange___Haunglongbing_(Citrus_greening)	Orange Haunglongbing (Citrus greening)	Orange_Haunglongbing_Citrus_greening.txt	wikipedia:Citrus greening disease
+Peach___Bacterial_spot	Peach Bacterial spot	Peach_Bacterial_spot.txt	wikipedia:Bacterial leaf scorch
+Peach___healthy	Peach healthy	Peach_healthy.txt	dataset:label
+Pepper,_bell___Bacterial_spot	Pepper bell Bacterial spot	Pepper_bell_Bacterial_spot.txt	wikipedia:Ralstonia solanacearum
+Pepper,_bell___healthy	Pepper bell healthy	Pepper_bell_healthy.txt	dataset:label
+Potato___Early_blight	Potato Early blight	Potato_Early_blight.txt	wikipedia:Phytophthora infestans
+Potato___Late_blight	Potato Late blight	Potato_Late_blight.txt	wikipedia:Phytophthora infestans
+Potato___healthy	Potato healthy	Potato_healthy.txt	dataset:label
+Raspberry___healthy	Raspberry healthy	Raspberry_healthy.txt	dataset:label
+Soybean___healthy	Soybean healthy	Soybean_healthy.txt	dataset:label
+Squash___Powdery_mildew	Squash Powdery mildew	Squash_Powdery_mildew.txt	wikipedia:Powdery mildew
+Strawberry___Leaf_scorch	Strawberry Leaf scorch	Strawberry_Leaf_scorch.txt	wikipedia:Diplocarpon earlianum
+Strawberry___healthy	Strawberry healthy	Strawberry_healthy.txt	dataset:label
+Tomato___Bacterial_spot	Tomato Bacterial spot	Tomato_Bacterial_spot.txt	wikipedia:Bacterial leaf spot of peppers and tomato
+Tomato___Early_blight	Tomato Early blight	Tomato_Early_blight.txt	wikipedia:Alternaria solani
+Tomato___Late_blight	Tomato Late blight	Tomato_Late_blight.txt	wikipedia:Phytophthora infestans
+Tomato___Leaf_Mold	Tomato Leaf Mold	Tomato_Leaf_Mold.txt	wikipedia:Tomato leaf mold
+Tomato___Septoria_leaf_spot	Tomato Septoria leaf spot	Tomato_Septoria_leaf_spot.txt	wikipedia:Leaf spot
+Tomato___Spider_mites Two-spotted_spider_mite	Tomato Spider mites Two spotted spider mite	Tomato_Spider_mites_Two_spotted_spider_mite.txt	wikipedia:Spider mite
+Tomato___Target_Spot	Tomato Target Spot	Tomato_Target_Spot.txt	wikipedia:Corynespora cassiicola
+Tomato___Tomato_Yellow_Leaf_Curl_Virus	Tomato Tomato Yellow Leaf Curl Virus	Tomato_Tomato_Yellow_Leaf_Curl_Virus.txt	wikipedia:Tomatillo
+Tomato___Tomato_mosaic_virus	Tomato Tomato mosaic virus	Tomato_Tomato_mosaic_virus.txt	wikipedia:Campari tomato
+Tomato___healthy	Tomato healthy	Tomato_healthy.txt	dataset:label

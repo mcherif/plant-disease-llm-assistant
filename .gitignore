@@ -143,6 +143,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.conda/
 
 # Spyder project settings
 .spyderproject
@@ -187,6 +188,7 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file. However, if you prefer, 
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
+.vscode/
 
 # Ruff stuff:
 .ruff_cache/
@@ -195,6 +197,9 @@ cython_debug/
 .pypirc
 
 # Cursor
+#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
+#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
+#  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
 
@@ -204,8 +209,16 @@ marimo/_lsp/
 __marimo__/
 
 # Project data (not versioned)
-data/raw/**
-data/processed/**
-data/kb/**
+data/raw/
+data/processed/
+data/kb/
+data/plantvillage_kb.json
 !data/**/.gitkeep
 !data/README.md
+checkpoints/
+.mlflow/
+mlruns/
+
+# OS/IDE
+.DS_Store
+Thumbs.db

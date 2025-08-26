@@ -4,10 +4,10 @@ emoji: 🌿
 pinned: false
 short_description: RAG-powered assistant for plant disease guidance
 license: mit
-tags: ["rag", "llm", "retrieval", "bm25", "vector-search", "streamlit", "fastapi", "mlops"]
-sdk: docker
+tags: ["rag", "llm", "retrieval", "bm25", "vector-search", "streamlit"]
+sdk: streamlit
 app_file: src/interface/streamlit_app.py
-app_port: 8501
+app_port: 7860
 ---
 
 <!-- Logo/banner at top -->
@@ -37,37 +37,59 @@ docker run -p 8501:8501 -v ${PWD}:/code plant-llm-assistant
 
 ```
 plant-disease-llm-assistant/
-├── README.md
-├── docker-compose.yml
-├── requirements.txt
-├── .env.example
-├── Makefile
 │
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── kb/
+├── README.md                  # Overview, setup instructions, project goals
+├── docker-compose.yml         # Multi-service container setup
+├── requirements.txt           # Python dependencies (with versions pinned)
+├── .env.example               # Environment variables template
+├── Makefile                   # Optional: shortcuts for build, run, test
 │
-├── notebooks/
+├── data/                      # Datasets & docs (or scripts to download them)
+│   ├── raw/                   # Original PlantVillage or other data
+│   ├── processed/             # Preprocessed/augmented data
+│   └── kb/                    # Knowledge base docs (PDFs, scraped pages, etc.)
+│
+├── notebooks/                 # Prototyping, EDA, experiments
 │   ├── 01_classifier_review.ipynb
 │   ├── 02_doc_ingestion.ipynb
 │   └── 03_rag_experiments.ipynb
 │
-├── src/
-│   ├── classifier/
-│   ├── ingestion/
-│   ├── retrieval/
-│   ├── llm/
-│   ├── monitoring/
-│   └── interface/
-│       ├── streamlit_app.py
-│       └── api.py
+├── src/                       # Core source code
+│   ├── classifier/            # Existing image classifier pipeline
+│   │   ├── train.py
+│   │   ├── infer.py
+│   │   └── utils.py
+│   │
+│   ├── ingestion/             # Scripts to fetch and preprocess knowledge base
+│   │   ├── ingest_docs.py     # Load docs into vector DB
+│   │   └── pipelines.py       # Prefect/Airflow ingestion flows
+│   │
+│   ├── retrieval/             # Retrieval logic
+│   │   ├── bm25_retriever.py
+│   │   ├── vector_retriever.py
+│   │   ├── hybrid_retriever.py
+│   │   └── evaluation.py      # Retrieval evaluation methods
+│   │
+│   ├── llm/                   # LLM interaction layer
+│   │   ├── rag_pipeline.py    # Orchestration of retrieval + LLM
+│   │   ├── query_rewriter.py  # User query rewriting with LLM
+│   │   └── evaluation.py      # LLM evaluation strategies
+│   │
+│   ├── monitoring/            # Metrics and dashboards
+│   │   ├── feedback_collector.py
+│   │   └── dashboard.py
+│   │
+│   └── interface/             # UI/API for end users
+│       ├── streamlit_app.py   # Streamlit front-end
+│       └── api.py             # FastAPI backend (optional)
 │
-├── tests/
+├── tests/                     # Unit & integration tests
 │   └── test_retrieval.py
-└── docs/
+│
+└── docs/                      # Documentation, design diagrams
     ├── architecture.png
     └── project_plan.md
+
 ```
 
 ## Development
