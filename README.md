@@ -12,7 +12,7 @@ app_port: 7860
 
 <!-- Logo/banner at top -->
 <p align="center">
-  <img src="images/plant-disease-logo.png" alt="Plant Disease Classifier Logo" width="300"/>
+  <img src="images/plant-disease-llm-assistant-logo.png" alt="Plant Disease LLM Assistant Logo" width="300"/>
 </p>
 
 # 🌿 Plant-Disease-LLM-Assistant
