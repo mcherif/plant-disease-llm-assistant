@@ -214,4 +214,4 @@ data/plantvillage_kb.json
 !data/**/.gitkeep
 !data/README.md
 checkpoints/
-.mlflow/
+.mlflow/execution_plan.md
