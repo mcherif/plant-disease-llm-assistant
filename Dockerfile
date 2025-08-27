@@ -9,4 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 EXPOSE 8501
-CMD ["bash", "-lc", "streamlit run src/interface/streamlit_app.py --server.address 0.0.0.0 --server.port 8501"]
+#CMD ["bash", "-lc", "streamlit run src/interface/streamlit_app.py --server.address 0.0.0.0 --server.port 8501"]
+CMD python src/app_gradio.py
