@@ -1,3 +1,29 @@
+"""
+Plant Disease LLM Assistant - Gradio app.
+
+Summary:
+- Provides a web UI (Gradio Blocks) to classify plant diseases from an uploaded image.
+- Loads a fine‑tuned Hugging Face image classification model from models/vit-finetuned.
+- Runs inference on CPU or GPU (CUDA if available), shows a result card and top‑k probabilities.
+- Embeds a local README and logo (if present) into the UI.
+
+How to run:
+- Local development:  python src/app_gradio.py --local    -> http://127.0.0.1:7860
+- HF Spaces/containers: python src/app_gradio.py          -> binds 0.0.0.0 using PORT env var
+
+Requirements:
+- gradio, torch, transformers; the model dir must include class_mapping.json.
+- Expected files:
+  models/vit-finetuned/
+    - model weights/config (e.g., pytorch_model.bin, config.json, preprocessor_config.json)
+    - class_mapping.json mapping class_name -> index
+  images/plant-disease-llm-assistant-logo.png (optional)
+  README.md (optional)
+
+Notes:
+- Toggle DEBUG=True to print additional diagnostic messages.
+"""
+
 import gradio as gr
 import torch
 import os
@@ -18,14 +44,14 @@ def dbg(msg: str):
 MODEL_DIR = "models/vit-finetuned"
 
 # Build a safe path to the logo and expose it via Gradio's file= URL
-LOGO_REL = "images/plant-disease-logo.png"
+LOGO_REL = "images/plant-disease-llm-assistant-logo.png"
 LOGO_ABS = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", LOGO_REL))
 
 # Path to README for embedding
 README_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", "README.md"))
-SPACE_URL = "https://huggingface.co/spaces/mcherif/Plant-Disease-Classifier"
+SPACE_URL = "https://huggingface.co/spaces/mcherif/Plant-Disease-LLM-Assistant"
 
 
 def logo_block():

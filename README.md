@@ -19,6 +19,8 @@ app_port: 7860
 
 An LLM-powered assistant that helps identify plant disease issues and provides guidance by retrieving from a curated knowledge base (docs, PDFs, web pages). It combines classic and vector retrieval with an LLM to provide grounded answers.
 
+> Note: The Gradio app (src/app_gradio.py) is the working, maintained end-to-end interface. Streamlit and FastAPI are used for component tests and are not maintained for full end-to-end usage.
+
 ## Quick start (Docker)
 
 - Compose (recommended):
