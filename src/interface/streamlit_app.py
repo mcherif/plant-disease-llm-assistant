@@ -1,59 +1,60 @@
+import os
+import json
+import torch
 import streamlit as st
+from PIL import Image
+from transformers import AutoImageProcessor, AutoModelForImageClassification
 
-DEBUG_MINIMAL = False  # Set to False to run the full app
+DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 
+MODEL_DIR = "models/vit-finetuned"
+
+st.set_page_config(page_title="Plant Disease LLM Assistant", page_icon="🌿")
 
 if DEBUG_MINIMAL:
-    st.write("Streamlit app file loaded")
     st.title("Plant Disease Classifier")
     st.write("Minimal debug mode: Streamlit is working!")
 else:
-    from PIL import Image
-    import torch
-    import os
-    import json
-    from transformers import AutoImageProcessor, AutoModelForImageClassification
-
-    # Model directory
-    MODEL_DIR = "models/vit-finetuned"
-
     st.title("Plant Disease LLM Assistant")
-    st.write("App is starting...")
-    st.write("b4 uploaded_file")
-    uploaded_file = st.file_uploader(
+    st.caption("Upload an image to classify with the finetuned ViT model.")
+
+    @st.cache_resource
+    def load_model_and_processor():
+        model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
+        processor = AutoImageProcessor.from_pretrained(MODEL_DIR)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.eval().to(device)
+        return model, processor, device
+
+    @st.cache_data
+    def id2label():
+        try:
+            with open(os.path.join(MODEL_DIR, "config.json"), "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            return {int(k): v for k, v in cfg.get("id2label", {}).items()}
+        except Exception:
+            return {}
+
+    uploaded = st.file_uploader(
         "Upload a plant image", type=["jpg", "jpeg", "png"])
-    st.write("after uploaded_file")
-    if uploaded_file is not None:
-        # Load model and processor only when needed
-        @st.cache_resource
-        def load_model_and_processor():
-            model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
-            processor = AutoImageProcessor.from_pretrained(MODEL_DIR)
-            model.eval()
-            device = torch.device(
-                "cuda" if torch.cuda.is_available() else "cpu")
-            model.to(device)
-            return model, processor, device
-        st.write("Loading model and processor...")
-        model, processor, device = load_model_and_processor()
+    if uploaded is not None:
+        image = Image.open(uploaded).convert("RGB")
+        st.image(image, caption="Uploaded image", use_column_width=True)
 
-        # Load class mapping
-        with open(os.path.join(MODEL_DIR, "class_mapping.json")) as f:
-            class_mapping = json.load(f)
-            idx_to_class = {v: k for k, v in class_mapping.items()}
-        st.write("Model and processor loaded.")
-        image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption="Uploaded Image", use_column_width=True)
-        st.write("Image uploaded and displayed.")
-        inputs = processor(images=image, return_tensors="pt")
-        inputs = {k: v.to(device) for k, v in inputs.items()}
-        st.write("Inputs processed, running inference...")
-        with torch.no_grad():
-            outputs = model(**inputs)
-            pred_idx = torch.argmax(outputs.logits, dim=1).item()
-            pred_class = idx_to_class[pred_idx]
-            confidence = torch.softmax(outputs.logits, dim=1)[
-                0, pred_idx].item()
+        with st.spinner("Loading model..."):
+            model, processor, device = load_model_and_processor()
+        labels = id2label()
 
-        st.markdown(f"**Prediction:** {pred_class}")
-        st.markdown(f"**Confidence:** {confidence:.2f}")
+        with st.spinner("Running inference..."):
+            inputs = processor(images=image, return_tensors="pt")
+            inputs = {k: v.to(device) for k, v in inputs.items()}
+            with torch.no_grad():
+                logits = model(**inputs).logits
+                probs = torch.softmax(logits, dim=-1).squeeze(0).cpu()
+                topk = min(5, probs.shape[-1])
+                scores, idxs = torch.topk(probs, topk)
+
+        st.subheader("Top predictions")
+        for score, idx in zip(scores.tolist(), idxs.tolist()):
+            label = labels.get(idx, f"class_{idx}")
+            st.write(f"- {label}: {score:.3f}")
