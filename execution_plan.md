@@ -26,18 +26,25 @@ Goal: Set the repo so everything is reproducible and testable.
 ## Milestone 1 — Knowledge Base (KB) Corpus
 Goal: Build a clean, deduplicated, well‑tagged KB from PlantVillage + Wikipedia.
 
-- [ ] Ingestion entrypoint: `src/ingestion/build_kb.py`
-  - [ ] CLI: `--sources plantvillage,wikipedia --out data/kb --min_tokens 50 --max_tokens 1000 --overlap 100`
+Status: In progress. Groundwork available (PlantVillage-focused utilities):
+- src/ingestion/refresh_kb_descriptions.py (PV refresher: summary/symptoms/cause)
+- src/ingestion/validate_kb_urls.py (URL validator/fixer)
+- scripts/plantvillage_scraper.py, scripts/verify_scoped_parsing.py, scripts/parse_html_debug.py (dev tools)
+
+- [~] Ingestion entrypoint
+  - [x] PlantVillage refresher: src/ingestion/refresh_kb_descriptions.py
+  - [ ] Unified builder: src/ingestion/build_kb.py (orchestrate PV+Wikipedia, write chunks/manifest)
+  - [ ] CLI: --sources plantvillage,wikipedia --out data/kb --min_tokens 50 --max_tokens 1000 --overlap 100
   - [ ] Respect robots.txt, polite rate limiting, retry/backoff
   - [ ] Normalize to markdown/text; strip boilerplate/nav
-  - [ ] Metadata: `doc_id, url, title, plant, disease, section, lang, crawl_date`
+  - [ ] Metadata: doc_id, url, title, plant, disease, section, lang, crawl_date
 - [ ] Chunking (512–1,000 tokens), sentence‑aware splits + overlap
 - [ ] Deduplication (MinHash/LSH) across pages and chunks
-- [ ] Manifest: `data/kb/manifest.parquet` with  
-      `doc_id, url, title, plant, disease, split_idx, text, n_tokens, lang, crawl_date`
-- [ ] Data card: `docs/data_card.md` (sources, licenses, cleaning steps, limitations)
-- [ ] Make target: `make kb` (runs build_kb, writes manifest + chunks)
-- [ ] Unit tests: `tests/test_ingestion.py` (chunk lengths, metadata presence, dedup sanity)
+- [ ] Manifest: data/kb/manifest.parquet with  
+      doc_id, url, title, plant, disease, split_idx, text, n_tokens, lang, crawl_date
+- [ ] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
+- [ ] Make target: make kb (runs build_kb, writes manifest + chunks)
+- [ ] Unit tests: tests/test_ingestion.py (chunk lengths, metadata presence, dedup sanity)
 
 **Acceptance checks**
 - [ ] One command builds the KB end‑to‑end
