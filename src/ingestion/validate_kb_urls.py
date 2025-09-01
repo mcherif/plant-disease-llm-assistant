@@ -11,11 +11,11 @@ What it does:
 
 Examples:
 - Dry run with logs:
-  python -m src.ingestion.validate_fix_kb_urls --verbose
+  python -m src.ingestion.validate_kb_urls --verbose
 - Apply fixes in place:
-  python -m src.ingestion.validate_fix_kb_urls --apply --verbose
+  python -m src.ingestion.validate_kb_urls --apply --verbose
 - Preview to a new file:
-  python -m src.ingestion.validate_fix_kb_urls --apply --out data\\plantvillage_kb.updated.json --verbose
+  python -m src.ingestion.validate_kb_urls --apply --out data\\plantvillage_kb.updated.json --verbose
 """
 
 import argparse

@@ -1,15 +1,12 @@
 import argparse
-from src.ingestion.refresh_kb_descriptions import _extract_inline_for_disease
-import os
-import sys
+import os, sys
+from pathlib import Path
+# Ensure project src/ is importable when run as a script
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from ingestion.refresh_kb_descriptions import _extract_inline_for_disease
 from bs4 import BeautifulSoup, Tag
 import re
-
-# Ensure project root is on sys.path when run directly
-PROJECT_ROOT = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), "..", ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
 
 DEFAULT_HTML = r"data\disease_and_pests.html"
 

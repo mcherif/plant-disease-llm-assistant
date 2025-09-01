@@ -1,3 +1,25 @@
+"""PlantVillage KB refresher.
+
+Purpose:
+- Update per-disease fields (summary/description, symptoms, cause) in data/plantvillage_kb.json
+  by scraping PlantVillage topic 'infos' pages and disease pages.
+
+How it works:
+- For each (plant, disease) in the KB, fetch the PlantVillage topic page(s).
+- Prefer scoped extraction from the disease section under the plant's 'infos' page.
+- Fall back to disease page URLs and page-level heuristics; optional Google CSE lookup.
+- Write the refreshed KB to --out (or overwrite --in when omitted).
+
+Examples:
+  # Preview to a new file (only fill blanks)
+  python -m src.ingestion.refresh_kb_descriptions --in data\\plantvillage_kb.json --out data\\plantvillage_kb.updated.json --only-empty --max-sentences 2 --verbose
+
+  # Refresh in place (overwrite)
+  python -m src.ingestion.refresh_kb_descriptions --in data\\plantvillage_kb.json --out data\\plantvillage_kb.json --force --max-sentences 2 --allow-google --verbose
+
+Notes:
+- Set GOOGLE_API_KEY and GOOGLE_CSE_ID to enable the Google CSE fallback.
+"""
 import argparse
 import json
 import os
@@ -832,7 +854,7 @@ def refresh_descriptions(
 
 def parse_args():
     ap = argparse.ArgumentParser(
-        description="Refresh descriptions in plantvillage_kb.json from PlantVillage disease pages")
+        description="Refresh KB (summary, symptoms, cause) from PlantVillage 'infos' and disease pages")
     ap.add_argument("--in", dest="inp",
                     default="data/plantvillage_kb.json", help="Input KB JSON path")
     ap.add_argument("--out", dest="out", default=None,
@@ -840,7 +862,7 @@ def parse_args():
     ap.add_argument("--delay", type=float, default=0.2,
                     help="Delay between HTTP requests (seconds)")
     ap.add_argument("--max-sentences", type=int, default=2,
-                    help="Max sentences to keep in description")
+                    help="Max sentences to keep in the summary/description")
     ap.add_argument("--only-empty", action="store_true",
                     help="Only update when description is empty or starts with the warning")
     ap.add_argument("--allow-google", action="store_true",
