@@ -222,3 +222,7 @@ mlruns/
 # OS/IDE
 .DS_Store
 Thumbs.db
+
+# Local debug HTML and scraped pages
+data/disease_and_pests.html
+data/disease_and_pests/
