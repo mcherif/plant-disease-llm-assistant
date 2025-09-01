@@ -28,6 +28,16 @@ else:
 
     @st.cache_data
     def id2label():
+        # 1) Prefer class_mapping.json (name -> index) and invert to index -> name
+        try:
+            with open(os.path.join(MODEL_DIR, "class_mapping.json"), "r", encoding="utf-8") as f:
+                name2idx = json.load(f)
+            if isinstance(name2idx, dict) and name2idx:
+                return {int(v): k for k, v in name2idx.items()}
+        except Exception:
+            pass
+
+        # 2) Fallback to config.json id2label (may be LABEL_x)
         try:
             with open(os.path.join(MODEL_DIR, "config.json"), "r", encoding="utf-8") as f:
                 cfg = json.load(f)
