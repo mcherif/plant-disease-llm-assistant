@@ -25,7 +25,7 @@ import json
 import os
 import re
 import time
-from typing import Optional, Tuple, Iterable
+from typing import Optional, Tuple
 from urllib.parse import urlparse, urljoin
 
 import requests

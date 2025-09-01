@@ -32,7 +32,7 @@ import json
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 import requests
-from bs4 import BeautifulSoup, Tag, NavigableString
+from bs4 import BeautifulSoup, Tag
 import warnings
 
 

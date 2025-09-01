@@ -22,7 +22,6 @@ import argparse
 import json
 import os
 import re
-import sys
 from typing import Optional, Tuple
 import requests
 from requests.adapters import HTTPAdapter
