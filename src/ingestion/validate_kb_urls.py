@@ -118,7 +118,6 @@ def validate_and_fix(kb_path: str, out_path: Optional[str], apply: bool,
     df_re = re.compile(disease_filter, re.I) if disease_filter else None
 
     sess = make_session()
-    changed = False
 
     for plant, diseases in kb.items():
         if pf_re and not pf_re.search(plant):
@@ -137,7 +136,6 @@ def validate_and_fix(kb_path: str, out_path: Optional[str], apply: bool,
                 guess = best_infos_url(plant)
                 if apply and guess:
                     entry["source"] = guess
-                    changed = True
                     stats["updated"] += 1
                     if verbose:
                         print(f"[ADD] {plant} / {disease}: source -> {guess}")
@@ -151,7 +149,6 @@ def validate_and_fix(kb_path: str, out_path: Optional[str], apply: bool,
             if src != old:
                 if apply:
                     entry["source"] = src
-                    changed = True
                     stats["updated"] += 1
                     if verbose:
                         print(f"[NORM] {plant} / {disease}: {old} -> {src}")
@@ -170,7 +167,6 @@ def validate_and_fix(kb_path: str, out_path: Optional[str], apply: bool,
             if final and final != src:
                 if apply:
                     entry["source"] = final
-                    changed = True
                     stats["updated"] += 1
                     if verbose:
                         print(
@@ -189,7 +185,6 @@ def validate_and_fix(kb_path: str, out_path: Optional[str], apply: bool,
                     fallback = best_infos_url(plant)
                     if apply and fallback and fallback != entry.get("source"):
                         entry["source"] = fallback
-                        changed = True
                         stats["updated"] += 1
                         if verbose:
                             print(

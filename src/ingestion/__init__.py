@@ -8,11 +8,7 @@ __all__ = [
 __version__ = "0.1.0"
 
 # Re-export common entry points (adjust names to match your module)
-try:
-    from .ingest_docs import build_kb  # noqa: F401
-except Exception:
-    # Safe if build_kb isn’t implemented yet
-    pass
+# build_kb import removed because ingest_docs.py no longer exists
 
 # Public ingestion APIs
 from .refresh_kb_descriptions import refresh_descriptions  # noqa: F401

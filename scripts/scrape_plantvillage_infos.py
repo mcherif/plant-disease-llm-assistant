@@ -33,7 +33,7 @@ import requests
 from bs4 import BeautifulSoup
 from difflib import get_close_matches
 from tqdm import tqdm
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin
 import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -273,7 +273,7 @@ def canonicalize_disease_name(name: str) -> str:
     """Return a canonical/most useful variant for lookups."""
     base = _norm(name).lower()
     # prefer the most explicit alias if misspelled
-    if base in DISEASE_ALIASES:
+    if (base in DISEASE_ALIASES):
         for v in DISEASE_ALIASES[base]:
             if "huanglongbing (citrus greening)" in v:
                 return v
@@ -426,36 +426,29 @@ def main():
             matched = match
             entry = disease_map.get(matched, {})
             description = entry.get("desc") or ""
-            source_url = entry.get("url") or BASE_URL.format(slug)
             # If scraped desc is weak, try direct PV disease page using alias variants
             if len(description) < 40:
-                desc2, url2 = try_plantvillage_direct(slug, disease_canon)
+                desc2, _ = try_plantvillage_direct(slug, disease_canon)
                 if desc2:
-                    description, source_url = desc2, url2
+                    description = desc2
             if len(description) < 40:
-                description, source_url = _wiki_fallback(
-                    crop_name, disease_canon)
+                description = _wiki_fallback(crop_name, disease_canon)[0]
         else:
             # Not found in listing: try direct PV disease page with aliases first
-            description, source_url = try_plantvillage_direct(
-                slug, disease_canon)
+            desc1, _ = try_plantvillage_direct(slug, disease_canon)
+            description = desc1
             if not description:
-                description, source_url = _wiki_fallback(
-                    crop_name, disease_canon)
-            # last resort: point to canonical PV URL if we have it
-            if not description:
-                key = (slug, _norm(disease_canon).lower())
-                source_url = CANONICAL_URL_OVERRIDES.get(
-                    key, BASE_URL.format(slug))
+                description = _wiki_fallback(crop_name, disease_canon)[0]
+            # last resort removed (source_url was unused)
 
         # Handle healthy with a static line (override matched/title)
         if disease_name.lower() == "healthy":
             matched = "healthy"
             description = f"{crop_name} sample labeled healthy (no disease symptoms)."
-            source_url = f"https://plantvillage.psu.edu/topics/{slug}/infos"
+            # (source_url removed; we always use base_infos below)
 
         base_infos = ensure_valid_pv_infos_url(
-            crop_name) or f"https://plantvillage.psu.edu/topics/{_slugify_topic(crop_name)}/infos"
+            f"https://plantvillage.psu.edu/topics/{slug}/infos") or f"https://plantvillage.psu.edu/topics/{_slugify_topic(crop_name)}/infos"
 
         kb[crop_name][disease_name] = {
             "matched_title": matched,
