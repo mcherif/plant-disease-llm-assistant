@@ -50,8 +50,8 @@ How to build (current state):
 - [x] Deduplication (MinHash/LSH) across pages and chunks
 - [x] Manifest: data/kb/manifest.parquet with  
       doc_id, url, title, plant, disease, split_idx, text, n_tokens, lang, crawl_date
+- [x] Make target: make kb (runs build_kb, writes manifest + chunks)
 - [ ] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
-- [ ] Make target: make kb (runs build_kb, writes manifest + chunks)
 - [~] Unit tests: tests/test_ingestion.py (chunk lengths, metadata presence, dedup sanity)
 
 **Acceptance checks**

@@ -14,9 +14,17 @@ import argparse
 import datetime as dt
 import json
 import re
+import time
+import requests
+import urllib.parse
+import urllib.robotparser
 import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
+
+WIKI_BASE = "https://{lang}.wikipedia.org"
+WIKI_SUMMARY = "/api/rest_v1/page/summary/{title}"
+USER_AGENT = "PlantDiseaseKB/0.1 (+https://github.com/mcherif/plant-disease-llm-assistant; https://huggingface.co/spaces/mcherif/Plant-Disease-LLM-Assistant)"
 
 
 class Doc(TypedDict, total=False):
@@ -29,6 +37,137 @@ class Doc(TypedDict, total=False):
     lang: str
     crawl_date: str  # ISO date
     text: str
+
+
+def make_session() -> requests.Session:
+    """Requests session with retry/backoff and custom User-Agent."""
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    sess = requests.Session()
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        backoff_factor=0.4,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=("HEAD", "GET"),
+    )
+    sess.mount("http://", HTTPAdapter(max_retries=retry))
+    sess.mount("https://", HTTPAdapter(max_retries=retry))
+    sess.headers.update({"User-Agent": USER_AGENT})
+    return sess
+
+
+class Robots:
+    """Cache robots.txt decisions per host."""
+
+    def __init__(self) -> None:
+        self._cache: Dict[str, urllib.robotparser.RobotFileParser] = {}
+
+    def allowed(self, url: str, ua: str = USER_AGENT) -> bool:
+        parsed = urllib.parse.urlparse(url)
+        host = f"{parsed.scheme}://{parsed.netloc}"
+        rp = self._cache.get(host)
+        if rp is None:
+            rp = urllib.robotparser.RobotFileParser()
+            rp.set_url(urllib.parse.urljoin(host, "/robots.txt"))
+            try:
+                rp.read()
+            except Exception:
+                return True  # fail-open to avoid hard blocks in offline runs
+            self._cache[host] = rp
+        return rp.can_fetch(ua, url)
+
+
+class RateLimiter:
+    """Simple per-host rate limiter (min_interval seconds between calls)."""
+
+    def __init__(self, min_interval: float = 1.0) -> None:
+        self.min_interval = min_interval
+        self._next: Dict[str, float] = {}
+
+    def wait(self, url: str) -> None:
+        now = time.time()
+        parsed = urllib.parse.urlparse(url)
+        host = f"{parsed.scheme}://{parsed.netloc}"
+        t_next = self._next.get(host, 0.0)
+        if now < t_next:
+            time.sleep(t_next - now)
+        self._next[host] = time.time() + self.min_interval
+
+
+def fetch_wikipedia_summary(
+    title: str,
+    lang: str,
+    sess: requests.Session,
+    robots: Robots,
+    rl: RateLimiter,
+    timeout: float = 10.0,
+) -> Optional[Dict]:
+    """Fetch REST summary for a title; returns dict with text, url, title or None on miss."""
+    base = WIKI_BASE.format(lang=lang)
+    path = WIKI_SUMMARY.format(title=urllib.parse.quote(title, safe=""))
+    url = urllib.parse.urljoin(base, path) + "?redirect=true"
+    if not robots.allowed(url, ua=USER_AGENT):
+        return None
+    rl.wait(url)
+    resp = sess.get(url, timeout=timeout)
+    if resp.status_code == 404:
+        return None
+    resp.raise_for_status()
+    data = resp.json()
+    extract = (data or {}).get("extract") or ""
+    if not extract:
+        return None
+    page_url = (
+        (((data or {}).get("content_urls") or {}).get("desktop") or {}).get("page")
+        or f"{base}/wiki/{urllib.parse.quote(data.get('title') or title)}"
+    )
+    norm_title = (data or {}).get("title") or title
+    return {"text": extract, "url": page_url, "title": norm_title}
+
+
+def load_docs_from_wikipedia_seeded(
+    kb_path: Union[str, Path], lang: str = "en", verbose: bool = False
+) -> List[Doc]:
+    """
+    Create Wikipedia docs by trying '{Disease} ({Plant})' then '{Disease}'.
+    Uses REST summaries, polite rate limiting, and robots.txt checks.
+    """
+    # Seed from PV KB plants/diseases
+    kb = json.loads(Path(kb_path).read_text(encoding="utf-8"))
+    sess = make_session()
+    robots = Robots()
+    rl = RateLimiter(min_interval=1.0)
+    docs: List[Doc] = []
+    crawl_date = now_date()
+
+    for plant, diseases in kb.items():
+        for disease, entry in diseases.items():
+            if disease.lower() == "healthy":
+                continue
+            for cand in (f"{disease} ({plant})", disease):
+                got = fetch_wikipedia_summary(
+                    cand, lang=lang, sess=sess, robots=robots, rl=rl
+                )
+                if not got:
+                    continue
+                doc: Doc = {
+                    "doc_id": str(uuid.uuid4()),
+                    "url": got["url"],
+                    "title": got["title"],
+                    "plant": plant,
+                    "disease": disease,
+                    "section": "wikipedia",
+                    "lang": lang,
+                    "crawl_date": crawl_date,
+                    "text": got["text"],
+                }
+                docs.append(doc)
+    if verbose:
+        print(f"[wiki] loaded {len(docs)} docs from Wikipedia")
+    return docs
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,16 +195,21 @@ def parse_args() -> argparse.Namespace:
         "--overlap", type=int, default=100, help="Token overlap between chunks (approx.)"
     )
     ap.add_argument(
-        "--kb", default=str(Path("data") / "plantvillage_kb.json"),
-        help="Path to PlantVillage KB JSON (produced by refresh_kb_descriptions.py)"
+        "--kb",
+        default=str(Path("data") / "plantvillage_kb.json"),
+        help="Path to PlantVillage KB JSON (produced by refresh_kb_descriptions.py)",
     )
     ap.add_argument(
-        "--dedup", default="none", choices=["none", "minhash"],
-        help="Deduplicate chunks (minhash uses LSH; requires 'datasketch')"
+        "--dedup",
+        default="none",
+        choices=["none", "minhash"],
+        help="Deduplicate chunks (minhash uses LSH; requires 'datasketch')",
     )
     ap.add_argument(
-        "--dedup-threshold", type=float, default=0.9,
-        help="MinHash Jaccard threshold for near-duplicate chunks (0.8–0.95 typical)"
+        "--dedup-threshold",
+        type=float,
+        default=0.9,
+        help="MinHash Jaccard threshold for near-duplicate chunks (0.8–0.95 typical)",
     )
     ap.add_argument("--verbose", action="store_true")
     return ap.parse_args()
@@ -262,7 +406,12 @@ def write_chunk_file(chunks_dir: Path, doc_id: str, split_idx: int, text: str) -
     return path
 
 
-def deduplicate_chunks(rows: List[Dict], method: str, threshold: float = 0.9, verbose: bool = False) -> List[Dict]:
+def deduplicate_chunks(
+    rows: List[Dict],
+    method: str,
+    threshold: float = 0.9,
+    verbose: bool = False,
+) -> List[Dict]:
     """Near-duplicate removal using MinHash/LSH. Keeps the first chunk in each near-dup group."""
     if method == "none":
         return rows
@@ -277,7 +426,7 @@ def deduplicate_chunks(rows: List[Dict], method: str, threshold: float = 0.9, ve
         toks = re.findall(r"\w+", text.lower(), flags=re.UNICODE)
         if len(toks) <= n:
             return [" ".join(toks)] if toks else []
-        return [" ".join(toks[i:i+n]) for i in range(0, len(toks) - n + 1)]
+        return [" ".join(toks[i: i + n]) for i in range(0, len(toks) - n + 1)]
 
     num_perm = 64
     lsh = MinHashLSH(threshold=threshold, num_perm=num_perm)
@@ -317,12 +466,15 @@ def deduplicate_chunks(rows: List[Dict], method: str, threshold: float = 0.9, ve
     return kept
 
 
-def load_docs_from_plantvillage(kb_path: Union[str, Path], verbose: bool = False) -> List[Doc]:
+def load_docs_from_plantvillage(
+    kb_path: Union[str, Path], verbose: bool = False
+) -> List[Doc]:
     """Load docs from PlantVillage KB JSON and synthesize markdown sections."""
     kb_path = Path(kb_path)
     if not kb_path.exists():
         raise FileNotFoundError(
-            f"PlantVillage KB not found: {kb_path}. Run refresh_kb_descriptions.py first.")
+            f"PlantVillage KB not found: {kb_path}. Run refresh_kb_descriptions.py first."
+        )
     with kb_path.open("r", encoding="utf-8") as f:
         kb = json.load(f)
 
@@ -369,12 +521,49 @@ def load_docs_from_plantvillage(kb_path: Union[str, Path], verbose: bool = False
     return docs
 
 
-def load_docs_from_wikipedia(verbose: bool = False) -> List[Doc]:
-    """Stub for Wikipedia ingestion; returns an empty list for now."""
-    # TODO: Implement Wikipedia ingestion (fetch or reuse cached HTML, then normalize text)
-    if verbose:
-        print("[wiki] ingestion is stubbed (returns 0 docs)")
-    return []
+def load_docs_from_wikipedia(plants_diseases, lang="en", delay=0.25, verbose=False):
+    sess = make_session()
+    robots = Robots()
+    base = f"https://{lang}.wikipedia.org"
+    docs = []
+    for plant, disease in plants_diseases:  # iterate needed pairs
+        candidates = [
+            disease,
+            f"{plant} {disease}",
+        ]
+        found = None
+        for cand in candidates:
+            title = urllib.parse.quote(cand.replace(" ", "_"))
+            url = f"{base}/api/rest_v1/page/summary/{title}"
+            if not robots.allowed(url, ua=USER_AGENT):
+                if verbose:
+                    print(f"[wiki][skip robots] {url}")
+                continue
+            r = sess.get(url, timeout=10)
+            time.sleep(delay)
+            if r.status_code != 200:
+                continue
+            data = r.json()
+            if data.get("type") == "disambiguation" or not data.get("extract"):
+                continue
+            text = normalize_to_markdown(data["extract"])
+            text = _strip_leading_title_repeat(text, disease)
+            docs.append({
+                "doc_id": str(uuid.uuid4()),
+                "url": (data.get("content_urls", {}).get("desktop", {}) or {}).get("page", f"{base}/wiki/{title}"),
+                "title": data.get("title") or f"{plant} — {disease}",
+                "plant": plant,
+                "disease": disease,
+                "section": "wikipedia:summary",
+                "lang": lang,
+                "crawl_date": now_date(),
+                "text": text,
+            })
+            found = True
+            break
+        if verbose and not found:
+            print(f"[wiki][miss] {plant} / {disease}")
+    return docs
 
 
 def build_kb(
@@ -397,7 +586,7 @@ def build_kb(
     if "plantvillage" in srcs:
         docs.extend(load_docs_from_plantvillage(kb_path, verbose=verbose))
     if "wikipedia" in srcs:
-        docs.extend(load_docs_from_wikipedia(verbose=verbose))
+        docs.extend(load_docs_from_wikipedia_seeded(kb_path, verbose=verbose))
 
     if not docs:
         raise RuntimeError("No documents loaded. Check --sources and inputs.")
@@ -407,7 +596,8 @@ def build_kb(
     for d in docs:
         text = d["text"]
         chunks = chunk_text_sentence_aware(
-            text, max_tokens=max_tokens, overlap_tokens=overlap)
+            text, max_tokens=max_tokens, overlap_tokens=overlap
+        )
         # Ensure min_tokens
         chunks = [c for c in chunks if count_tokens(c) >= min_tokens]
         for i, ch in enumerate(chunks):
@@ -432,7 +622,8 @@ def build_kb(
 
     # Deduplicate (stub)
     rows = deduplicate_chunks(
-        rows, method=dedup_method, threshold=dedup_threshold, verbose=verbose)
+        rows, method=dedup_method, threshold=dedup_threshold, verbose=verbose
+    )
 
     # Manifest
     manifest_path = write_manifest(rows, out_dir, verbose=verbose)
