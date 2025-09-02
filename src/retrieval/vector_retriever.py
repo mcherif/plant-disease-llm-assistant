@@ -1,1 +1,0 @@
-# Vector retriever using embeddings

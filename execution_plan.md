@@ -75,11 +75,11 @@ Goal: High‑recall retrieval fusing lexical + vector.
 - [x] Filters
   - [x] Plant/disease metadata filters
   - [x] Deterministic seeds not needed (pure retrieval)
-- [ ] Evaluation scaffolding
-  - [ ] Mini labeled set: data/kb/labels.jsonl
-  - [ ] Script: src/retrieval/evaluate.py → Recall@k, nDCG@k
+- [~] Evaluation scaffolding
+  - [x] Mini labeled set: data/kb/labels.jsonl
+  - [x] Script: src/retrieval/evaluate.py → Recall@k, nDCG@k
   - [ ] Tests: tests/test_retrieval.py
-- [ ] Make targets
+- [~] Make targets
   - [ ] make index (embed + build index)
   - [ ] make eval_retrieval (run evaluate.py)
 
