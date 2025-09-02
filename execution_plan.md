@@ -23,10 +23,9 @@ Goal: Set the repo so everything is reproducible and testable.
 
 ---
 
-## Milestone 1 — Knowledge Base (KB) Corpus
+## Milestone 1 — Knowledge Base (KB) Corpus — Done
 Goal: Build a clean, deduplicated, well‑tagged KB from PlantVillage + Wikipedia.
-
-Status: In progress. Groundwork available (PlantVillage-focused utilities):
+Status: Done (first version). Ongoing: normalization polish and more tests.
 
 How to build (current state):
 - PV + Wikipedia:
@@ -51,7 +50,7 @@ How to build (current state):
 - [x] Manifest: data/kb/manifest.parquet with  
       doc_id, url, title, plant, disease, split_idx, text, n_tokens, lang, crawl_date
 - [x] Make target: make kb (runs build_kb, writes manifest + chunks)
-- [~] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
+- [x] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
 - [~] Unit tests: tests/test_ingestion.py (chunk lengths, metadata presence, dedup sanity)
 
 **Acceptance checks**

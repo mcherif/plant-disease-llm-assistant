@@ -30,9 +30,25 @@ USER_AGENT = "PlantDiseaseKB/0.1 (+https://github.com/mcherif/plant-disease-llm-
 WIKI_NORMALIZE: Dict[str, str] = {
     "haunglongbing (citrus greening)": "huanglongbing",
     "haunglongbing": "huanglongbing",
+    "citrus greening": "huanglongbing",
+    "citrus greening disease": "huanglongbing",
     "leaf mold": "leaf mold",  # ensure US spelling; UK: 'leaf mould'
+    "leaf mould": "leaf mold",
+    "leaf mold (tomato)": "tomato leaf mold",
+    "tomato leaf mould": "tomato leaf mold",
     "tomato yellow leaf curl virus": "tomato yellow leaf curl virus",
     "northern leaf blight": "northern corn leaf blight",
+    "northern leaf blight (corn (maize))": "northern corn leaf blight",
+    "cercospora leaf spot gray leaf spot": "gray leaf spot",
+    "cercospora leaf spot grey leaf spot": "corn grey leaf spot",
+    "leaf blight (isariopsis leaf spot)": "isariopsis leaf spot",
+    "spider mites two-spotted spider mite": "two-spotted spider mite",
+    "tomato septoria leaf spot": "septoria lycopersici",
+    "septoria leaf spot (tomato)": "septoria lycopersici",
+    "leaf scorch (strawberry)": "strawberry leaf scorch",
+    "target spot": "corynespora cassiicola",
+    "tomato target spot": "corynespora cassiicola",
+    "esca (black measles)": "esca",
 }
 
 
