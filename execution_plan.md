@@ -29,8 +29,8 @@ Goal: Build a clean, deduplicated, well‑tagged KB from PlantVillage + Wikipedi
 Status: In progress. Groundwork available (PlantVillage-focused utilities):
 
 How to build (current state):
-- PlantVillage only:
-  - python -m src.ingestion.build_kb --sources plantvillage --out data\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
+- PV + Wikipedia:
+  - python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
 - Outputs:
   - data/kb/chunks/*.md (chunk files)
   - data/kb/manifest.parquet (or CSV fallback)
@@ -51,12 +51,12 @@ How to build (current state):
 - [x] Manifest: data/kb/manifest.parquet with  
       doc_id, url, title, plant, disease, split_idx, text, n_tokens, lang, crawl_date
 - [x] Make target: make kb (runs build_kb, writes manifest + chunks)
-- [ ] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
+- [~] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
 - [~] Unit tests: tests/test_ingestion.py (chunk lengths, metadata presence, dedup sanity)
 
 **Acceptance checks**
-- [ ] One command builds the KB end‑to‑end
-- [ ] Spot‑check 10 random chunks → clean text & correct tags
+- [x] One command builds the KB end‑to‑end
+- [x] Spot‑check 10 random chunks → clean text & correct tags
 
 ---
 
