@@ -116,6 +116,18 @@ uvicorn src.interface.api:app --host 0.0.0.0 --port 8000
 ## Dataset
 See docs/data_card.md for sources, build steps, and limitations.
 
+### Expanding disease coverage
+If you expand the disease classes (e.g., add grape diseases), do the following:
+- Update the seed pairs in data/plantvillage_kb.json (via src/ingestion/refresh_kb_descriptions.py or manual edit).
+- Extend WIKI_NORMALIZE in src/ingestion/build_kb.py for known name variants (e.g., “haunglongbing” → “huanglongbing”, “leaf mould” → “leaf mold”).
+- Relax or adjust the relevance filter (_wiki_is_relevant in src/ingestion/build_kb.py) to accept new pages (e.g., allow grape list/overview pages if useful).
+- Rebuild the KB and re-index your retrieval store.
+
+Rebuild command (example):
+```powershell
+python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb --min_tokens 50 --max_tokens 400 --overlap 80 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
+```
+
 ## Notes
 
 - Place unversioned datasets/docs in data/raw, data/processed, data/kb (see .gitignore).

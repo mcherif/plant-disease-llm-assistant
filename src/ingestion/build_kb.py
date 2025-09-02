@@ -26,6 +26,15 @@ WIKI_BASE = "https://{lang}.wikipedia.org"
 WIKI_SUMMARY = "/api/rest_v1/page/summary/{title}"
 USER_AGENT = "PlantDiseaseKB/0.1 (+https://github.com/mcherif/plant-disease-llm-assistant; https://huggingface.co/spaces/mcherif/Plant-Disease-LLM-Assistant)"
 
+# Canonicalization for common spelling/casing mismatches from PV → Wikipedia
+WIKI_NORMALIZE: Dict[str, str] = {
+    "haunglongbing (citrus greening)": "huanglongbing",
+    "haunglongbing": "huanglongbing",
+    "leaf mold": "leaf mold",  # ensure US spelling; UK: 'leaf mould'
+    "tomato yellow leaf curl virus": "tomato yellow leaf curl virus",
+    "northern leaf blight": "northern corn leaf blight",
+}
+
 
 class Doc(TypedDict, total=False):
     doc_id: str
@@ -207,6 +216,35 @@ def fetch_wikipedia_search_title(
     return items[0].get("title") or None
 
 
+def _normalize_candidate(cand: str) -> str:
+    key = cand.strip().lower()
+    return WIKI_NORMALIZE.get(key, cand)
+
+
+def _wiki_is_relevant(title: str, extract: str, plant: str, disease: str) -> bool:
+    """Heuristic filter to avoid lists/off-topic pages from search fallback."""
+    t = (title or "").lower()
+    ex = (extract or "").lower()
+    pl = (plant or "").lower()
+    dz = (disease or "").lower()
+
+    # Avoid list/overview pages by default
+    if t.startswith("list of"):
+        return False
+
+    # If disease is specific, require it in title or extract
+    if dz and (dz in t or dz in ex):
+        return True
+
+    # For generic disease terms, require plant mention
+    generic_terms = ["blight", "mildew", "rust", "leaf spot", "leaf mold", "mite", "virus"]
+    if any(g in dz for g in generic_terms):
+        return bool(pl) and (pl in t or pl in ex)
+
+    # Fallback: accept if both plant and any generic term appear in text
+    return bool(pl) and (pl in ex) and any(g in ex for g in generic_terms)
+
+
 def _seed_pairs_from_pv(kb_path: Union[str, Path]) -> List[Tuple[str, str]]:
     """Derive (plant, disease) pairs from PlantVillage KB JSON (skip 'healthy')."""
     kb = json.loads(Path(kb_path).read_text(encoding="utf-8"))
@@ -230,7 +268,6 @@ def load_docs_from_wikipedia(
     """Fetch summaries for candidate titles derived from (plant, disease) pairs using the Action API."""
     sess = make_session()
     rl = RateLimiter(min_interval=delay)
-    base = f"https://{lang}.wikipedia.org"
     docs: List[Doc] = []
     total = len(plants_diseases)
     misses = 0
@@ -244,7 +281,8 @@ def load_docs_from_wikipedia(
         seen_titles = set()
         candidates = []
         for c in raw_candidates:
-            t = c.strip()
+            # Normalize common mismatches before querying
+            t = _normalize_candidate(c)
             if not t:
                 continue
             k = t.casefold()
@@ -286,6 +324,12 @@ def load_docs_from_wikipedia(
             if not res:
                 if verbose:
                     print(f"[wiki][miss-cand] {cand}")
+                continue
+
+            # Relevance filter to drop off-topic hits (e.g., lists, cultivars)
+            if not _wiki_is_relevant(res["title"], res["text"], plant, disease):
+                if verbose:
+                    print(f"[wiki][drop] {res['title']} (irrelevant)")
                 continue
 
             text = normalize_to_markdown(res["text"])
