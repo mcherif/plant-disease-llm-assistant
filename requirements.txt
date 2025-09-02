@@ -1,3 +1,7 @@
+# Project dependencies
+# Core
+# (pin your core runtime deps here)
+
 altair
 beautifulsoup4
 chromadb
@@ -18,3 +22,6 @@ tqdm
 transformers
 uvicorn
 wikipedia
+
+# Optional: KB deduplication via MinHash/LSH
+datasketch>=1.6

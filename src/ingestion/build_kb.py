@@ -1,30 +1,15 @@
 """
 Unified KB builder for PlantVillage (+ Wikipedia soon).
 
-Purpose:
-- Orchestrate ingestion from multiple sources into a normalized, chunked corpus.
-- Produce chunks and a manifest with metadata.
+- Reads PlantVillage KB JSON (from refresh_kb_descriptions.py)
+- Normalizes sections to markdown, sanitizes minor noise
+- Chunks sentence-aware with overlap
+- Optional MinHash/LSH dedup
+- Writes chunks/ and a manifest (Parquet or CSV fallback)
 
-Current capabilities:
-- PlantVillage: reads data/plantvillage_kb.json produced by refresh_kb_descriptions.py
-  and builds chunks from description + symptoms + cause.
-- Wikipedia: stubbed (returns empty for now).
-
-Outputs:
-- {out_dir}/chunks/*.md (one file per chunk)
-- {out_dir}/manifest.parquet (or CSV fallback) with:
-  doc_id, url, title, plant, disease, section, lang, split_idx, text, n_tokens, crawl_date
-
-CLI:
-  python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb --min_tokens 50 --max_tokens 1000 --overlap 100
-
-Notes:
-- Token counting is an approximation (word-based). Replace with a tokenizer if needed.
-- Deduplication and Wikipedia fetch are stubbed; wire them in incrementally.
+Usage:
+  python -m src.ingestion.build_kb --sources plantvillage --out data\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
 """
-
-from __future__ import annotations
-
 import argparse
 import datetime as dt
 import json
@@ -48,6 +33,7 @@ class Doc(TypedDict, total=False):
 
 
 def parse_args() -> argparse.Namespace:
+    """CLI for selecting sources, output directory, chunking, and dedup options."""
     ap = argparse.ArgumentParser(
         description="Build a normalized, chunked KB from PlantVillage (+Wikipedia soon)."
     )
@@ -76,7 +62,11 @@ def parse_args() -> argparse.Namespace:
     )
     ap.add_argument(
         "--dedup", default="none", choices=["none", "minhash"],
-        help="Deduplicate chunks (scaffold: minhash not yet implemented)"
+        help="Deduplicate chunks (minhash uses LSH; requires 'datasketch')"
+    )
+    ap.add_argument(
+        "--dedup-threshold", type=float, default=0.9,
+        help="MinHash Jaccard threshold for near-duplicate chunks (0.8–0.95 typical)"
     )
     ap.add_argument("--verbose", action="store_true")
     return ap.parse_args()
@@ -95,13 +85,13 @@ def count_tokens(text: str) -> int:
 
 
 def sentence_split(text: str) -> List[str]:
-    # Simple, conservative splitter; replace with spaCy or nltk if needed.
+    """Very simple sentence splitter; replace with spaCy/NLTK for better accuracy."""
     parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(0-9])", text.strip())
     return [p.strip() for p in parts if p and not p.isspace()]
 
 
 def normalize_to_markdown(text: str) -> str:
-    # Placeholder for HTML→Markdown and boilerplate stripping.
+    """Light normalization placeholder; collapse stray whitespace/newlines."""
     return re.sub(r"\s+\n", "\n", text.strip())
 
 
@@ -138,12 +128,14 @@ def _collapse_repeated_word_labels(text: str) -> str:
 
 
 def _sanitize_cause(text: str) -> str:
+    """Sanitize 'Cause' sections (collapse repeated labels)."""
     return _collapse_repeated_word_labels(text)
 
 
 def chunk_text_sentence_aware(
     text: str, max_tokens: int, overlap_tokens: int
 ) -> List[str]:
+    """Pack sentences into chunks up to max_tokens, carrying overlap from the end of the previous chunk."""
     if not text:
         return []
     sents = sentence_split(text)
@@ -176,6 +168,7 @@ def chunk_text_sentence_aware(
 
 
 def ensure_out_dirs(out_dir: Union[str, Path]) -> Tuple[Path, Path]:
+    """Create the output directory and chunks/ subfolder."""
     out_dir = Path(out_dir)
     chunks_dir = out_dir / "chunks"
     chunks_dir.mkdir(parents=True, exist_ok=True)
@@ -183,6 +176,7 @@ def ensure_out_dirs(out_dir: Union[str, Path]) -> Tuple[Path, Path]:
 
 
 def write_manifest(rows: List[Dict], out_dir: Path, verbose: bool = False) -> Path:
+    """Write a manifest to Parquet if possible; fall back to CSV. Returns the manifest path."""
     out_parquet = out_dir / "manifest.parquet"
     out_csv = out_dir / "manifest.csv"
     try:
@@ -246,6 +240,7 @@ def write_manifest(rows: List[Dict], out_dir: Path, verbose: bool = False) -> Pa
 
 
 def write_chunk_file(chunks_dir: Path, doc_id: str, split_idx: int, text: str) -> Path:
+    """Write a single chunk to chunks/{doc_id}_{split_idx}.md and return its path."""
     safe_id = re.sub(r"[^A-Za-z0-9_\-]", "_", doc_id)
     path = chunks_dir / f"{safe_id}_{split_idx:04d}.md"
     with path.open("w", encoding="utf-8") as f:
@@ -254,16 +249,63 @@ def write_chunk_file(chunks_dir: Path, doc_id: str, split_idx: int, text: str) -
     return path
 
 
-def deduplicate_chunks(rows: List[Dict], method: str, verbose: bool = False) -> List[Dict]:
+def deduplicate_chunks(rows: List[Dict], method: str, threshold: float = 0.9, verbose: bool = False) -> List[Dict]:
+    """Near-duplicate removal using MinHash/LSH. Keeps the first chunk in each near-dup group."""
     if method == "none":
         return rows
-    # TODO: Implement MinHash/LSH deduplication (placeholder)
+    try:
+        from datasketch import MinHash, MinHashLSH  # type: ignore
+    except Exception as e:
+        if verbose:
+            print(f"[dedup] datasketch unavailable ({e}); skipping dedup")
+        return rows
+
+    def shingles(text: str, n: int = 5) -> List[str]:
+        toks = re.findall(r"\w+", text.lower(), flags=re.UNICODE)
+        if len(toks) <= n:
+            return [" ".join(toks)] if toks else []
+        return [" ".join(toks[i:i+n]) for i in range(0, len(toks) - n + 1)]
+
+    num_perm = 64
+    lsh = MinHashLSH(threshold=threshold, num_perm=num_perm)
+    kept: List[Dict] = []
+    mh_index: Dict[str, MinHash] = {}
+
+    def row_key(r: Dict) -> str:
+        return f"{r.get('doc_id','')}_{int(r.get('split_idx', 0))}"
+
+    dup_count = 0
+    for r in rows:
+        text = (r.get("text") or "").strip()
+        if not text:
+            continue
+        mh = MinHash(num_perm=num_perm)
+        for g in shingles(text):
+            mh.update(g.encode("utf-8"))
+        # Query LSH for near-dups
+        candidates = lsh.query(mh)
+        is_dup = False
+        for cid in candidates:
+            # Final check using MinHash estimate to be safe
+            if mh.jaccard(mh_index[cid]) >= threshold:
+                is_dup = True
+                break
+        if is_dup:
+            dup_count += 1
+            continue
+        kid = row_key(r)
+        lsh.insert(kid, mh)
+        mh_index[kid] = mh
+        kept.append(r)
+
     if verbose:
-        print("[dedup] method=minhash requested, but not implemented; skipping.")
-    return rows
+        print(
+            f"[dedup] kept {len(kept)} / {len(rows)} chunks (removed {dup_count})")
+    return kept
 
 
 def load_docs_from_plantvillage(kb_path: Union[str, Path], verbose: bool = False) -> List[Doc]:
+    """Load docs from PlantVillage KB JSON and synthesize markdown sections."""
     kb_path = Path(kb_path)
     if not kb_path.exists():
         raise FileNotFoundError(
@@ -313,6 +355,7 @@ def load_docs_from_plantvillage(kb_path: Union[str, Path], verbose: bool = False
 
 
 def load_docs_from_wikipedia(verbose: bool = False) -> List[Doc]:
+    """Stub for Wikipedia ingestion; returns an empty list for now."""
     # TODO: Implement Wikipedia ingestion (fetch or reuse cached HTML, then normalize text)
     if verbose:
         print("[wiki] ingestion is stubbed (returns 0 docs)")
@@ -327,8 +370,10 @@ def build_kb(
     max_tokens: int,
     overlap: int,
     dedup_method: str,
+    dedup_threshold: float = 0.9,
     verbose: bool = False,
 ) -> Path:
+    """Main pipeline: load docs, chunk, optionally dedup, and write manifest."""
     out_dir, chunks_dir = ensure_out_dirs(out_dir)
 
     # Load documents
@@ -371,7 +416,8 @@ def build_kb(
         print(f"[chunk] wrote {len(rows)} chunks to {chunks_dir}")
 
     # Deduplicate (stub)
-    rows = deduplicate_chunks(rows, method=dedup_method, verbose=verbose)
+    rows = deduplicate_chunks(
+        rows, method=dedup_method, threshold=dedup_threshold, verbose=verbose)
 
     # Manifest
     manifest_path = write_manifest(rows, out_dir, verbose=verbose)
@@ -379,6 +425,7 @@ def build_kb(
 
 
 def main() -> int:
+    """CLI entrypoint."""
     args = parse_args()
     sources = args.sources.split(",") if args.sources else []
     try:
@@ -390,6 +437,7 @@ def main() -> int:
             max_tokens=args.max_tokens,
             overlap=args.overlap,
             dedup_method=args.dedup,
+            dedup_threshold=args.dedup_threshold,
             verbose=args.verbose,
         )
         if args.verbose:

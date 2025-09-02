@@ -27,6 +27,14 @@ Goal: Set the repo so everything is reproducible and testable.
 Goal: Build a clean, deduplicated, well‑tagged KB from PlantVillage + Wikipedia.
 
 Status: In progress. Groundwork available (PlantVillage-focused utilities):
+
+How to build (current state):
+- PlantVillage only:
+  - python -m src.ingestion.build_kb --sources plantvillage --out data\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
+- Outputs:
+  - data/kb/chunks/*.md (chunk files)
+  - data/kb/manifest.parquet (or CSV fallback)
+
 - src/ingestion/refresh_kb_descriptions.py (PV refresher: summary/symptoms/cause)
 - src/ingestion/validate_kb_urls.py (URL validator/fixer)
 - scripts/plantvillage_scraper.py, scripts/verify_scoped_parsing.py, scripts/parse_html_debug.py (dev tools)
@@ -39,12 +47,12 @@ Status: In progress. Groundwork available (PlantVillage-focused utilities):
   - [~] Normalize to markdown/text; strip boilerplate/nav
   - [x] Metadata: doc_id, url, title, plant, disease, section, lang, crawl_date
 - [x] Chunking (512–1,000 tokens), sentence‑aware splits + overlap
-- [ ] Deduplication (MinHash/LSH) across pages and chunks
+- [x] Deduplication (MinHash/LSH) across pages and chunks
 - [x] Manifest: data/kb/manifest.parquet with  
       doc_id, url, title, plant, disease, split_idx, text, n_tokens, lang, crawl_date
 - [ ] Data card: docs/data_card.md (sources, licenses, cleaning steps, limitations)
 - [ ] Make target: make kb (runs build_kb, writes manifest + chunks)
-- [ ] Unit tests: tests/test_ingestion.py (chunk lengths, metadata presence, dedup sanity)
+- [~] Unit tests: tests/test_ingestion.py (chunk lengths, metadata presence, dedup sanity)
 
 **Acceptance checks**
 - [ ] One command builds the KB end‑to‑end
