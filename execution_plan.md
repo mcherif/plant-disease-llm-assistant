@@ -43,7 +43,7 @@ How to build (current state):
   - [x] PlantVillage refresher: src/ingestion/refresh_kb_descriptions.py
   - [x] Unified builder: src/ingestion/build_kb.py (scaffold with CLI and chunking)
   - [x] CLI: --sources plantvillage,wikipedia --out data/kb --min_tokens 50 --max_tokens 1000 --overlap 100
-  - [ ] Respect robots.txt, polite rate limiting, retry/backoff
+  - [x] Respect robots.txt, polite rate limiting, retry/backoff
   - [~] Normalize to markdown/text; strip boilerplate/nav
   - [x] Metadata: doc_id, url, title, plant, disease, section, lang, crawl_date
 - [x] Chunking (512–1,000 tokens), sentence‑aware splits + overlap

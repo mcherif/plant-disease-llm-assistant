@@ -128,43 +128,204 @@ def fetch_wikipedia_summary(
     return {"text": extract, "url": page_url, "title": norm_title}
 
 
-def load_docs_from_wikipedia_seeded(
-    kb_path: Union[str, Path], lang: str = "en", verbose: bool = False
-) -> List[Doc]:
+def fetch_wikipedia_intro_action(
+    title: str,
+    lang: str,
+    sess: requests.Session,
+    rl: RateLimiter,
+    timeout: float = 10.0,
+) -> Optional[Dict]:
     """
-    Create Wikipedia docs by trying '{Disease} ({Plant})' then '{Disease}'.
-    Uses REST summaries, polite rate limiting, and robots.txt checks.
+    Fetch the lead intro via MediaWiki Action API (exintro, plaintext), following redirects.
+    Returns dict with text, url, title or None on miss/disambiguation.
     """
-    # Seed from PV KB plants/diseases
-    kb = json.loads(Path(kb_path).read_text(encoding="utf-8"))
-    sess = make_session()
-    robots = Robots()
-    rl = RateLimiter(min_interval=1.0)
-    docs: List[Doc] = []
-    crawl_date = now_date()
+    base = WIKI_BASE.format(lang=lang)
+    api_url = urllib.parse.urljoin(base, "/w/api.php")
+    params = {
+        "action": "query",
+        "prop": "extracts|info|pageprops",
+        "ppprop": "disambiguation",
+        "exintro": "1",
+        "explaintext": "1",
+        "redirects": "1",
+        "inprop": "url",
+        "format": "json",
+        "formatversion": "2",
+        "titles": title,
+    }
+    rl.wait(api_url)
+    resp = sess.get(api_url, params=params, timeout=timeout)
+    if resp.status_code == 404:
+        return None
+    resp.raise_for_status()
+    data = resp.json()
+    pages = (data.get("query", {}) or {}).get("pages") or []
+    if not pages:
+        return None
+    page = pages[0]
+    # Skip missing or disambiguation pages
+    if page.get("missing") or ("pageprops" in page and "disambiguation" in (page["pageprops"] or {})):
+        return None
+    extract = (page.get("extract") or "").strip()
+    if not extract:
+        return None
+    page_url = page.get("canonicalurl") or page.get(
+        "fullurl") or f"{base}/wiki/{urllib.parse.quote(page.get('title') or title)}"
+    norm_title = page.get("title") or title
+    return {"text": extract, "url": page_url, "title": norm_title}
 
+
+def fetch_wikipedia_search_title(
+    query: str,
+    lang: str,
+    sess: requests.Session,
+    rl: RateLimiter,
+    timeout: float = 10.0,
+) -> Optional[str]:
+    """Use MediaWiki search to find the best title for a query; returns normalized title or None."""
+    base = WIKI_BASE.format(lang=lang)
+    api_url = urllib.parse.urljoin(base, "/w/api.php")
+    params = {
+        "action": "query",
+        "list": "search",
+        "srsearch": query,
+        "srlimit": "1",
+        "srinfo": "totalhits",
+        "srprop": "",
+        "format": "json",
+        "formatversion": "2",
+    }
+    rl.wait(api_url)
+    resp = sess.get(api_url, params=params, timeout=timeout)
+    if resp.status_code == 404:
+        return None
+    resp.raise_for_status()
+    data = resp.json()
+    items = (data.get("query", {}) or {}).get("search") or []
+    if not items:
+        return None
+    return items[0].get("title") or None
+
+
+def _seed_pairs_from_pv(kb_path: Union[str, Path]) -> List[Tuple[str, str]]:
+    """Derive (plant, disease) pairs from PlantVillage KB JSON (skip 'healthy')."""
+    kb = json.loads(Path(kb_path).read_text(encoding="utf-8"))
+    pairs: List[Tuple[str, str]] = []
+    seen = set()
     for plant, diseases in kb.items():
-        for disease, entry in diseases.items():
+        for disease in diseases.keys():
             if disease.lower() == "healthy":
                 continue
-            for cand in (f"{disease} ({plant})", disease):
-                got = fetch_wikipedia_summary(
-                    cand, lang=lang, sess=sess, robots=robots, rl=rl
-                )
-                if not got:
-                    continue
-                doc: Doc = {
+            key = (plant, disease)
+            if key in seen:
+                continue
+            seen.add(key)
+            pairs.append(key)
+    return pairs
+
+
+def load_docs_from_wikipedia(
+    plants_diseases: List[Tuple[str, str]], lang: str = "en", delay: float = 0.25, verbose: bool = False
+) -> List[Doc]:
+    """Fetch summaries for candidate titles derived from (plant, disease) pairs using the Action API."""
+    sess = make_session()
+    rl = RateLimiter(min_interval=delay)
+    base = f"https://{lang}.wikipedia.org"
+    docs: List[Doc] = []
+    total = len(plants_diseases)
+    misses = 0
+    for plant, disease in plants_diseases:
+        # Try multiple title variants; keep order, drop duplicates
+        raw_candidates = [
+            disease,
+            f"{disease} ({plant})",
+            f"{plant} {disease}",
+        ]
+        seen_titles = set()
+        candidates = []
+        for c in raw_candidates:
+            t = c.strip()
+            if not t:
+                continue
+            k = t.casefold()
+            if k in seen_titles:
+                continue
+            seen_titles.add(k)
+            candidates.append(t)
+
+        found = False
+        for cand in candidates:
+            try:
+                res = fetch_wikipedia_intro_action(
+                    cand, lang=lang, sess=sess, rl=rl)
+            except Exception as e:
+                if verbose:
+                    print(f"[wiki][error] {cand} -> {e}")
+                res = None
+
+            # Fallback: search best title, then fetch intro
+            if not res:
+                try:
+                    best = fetch_wikipedia_search_title(
+                        cand, lang=lang, sess=sess, rl=rl)
+                except Exception as e:
+                    if verbose:
+                        print(f"[wiki][search-error] {cand} -> {e}")
+                    best = None
+                if best and best.casefold() != cand.casefold():
+                    if verbose:
+                        print(f"[wiki][search-hit] {cand} -> {best}")
+                    try:
+                        res = fetch_wikipedia_intro_action(
+                            best, lang=lang, sess=sess, rl=rl)
+                    except Exception as e:
+                        if verbose:
+                            print(f"[wiki][error] {best} -> {e}")
+                        res = None
+
+            if not res:
+                if verbose:
+                    print(f"[wiki][miss-cand] {cand}")
+                continue
+
+            text = normalize_to_markdown(res["text"])
+            text = _strip_leading_title_repeat(text, disease)
+            docs.append(
+                {
                     "doc_id": str(uuid.uuid4()),
-                    "url": got["url"],
-                    "title": got["title"],
+                    "url": res["url"],
+                    "title": res["title"] or f"{plant} — {disease}",
                     "plant": plant,
                     "disease": disease,
-                    "section": "wikipedia",
+                    "section": "wikipedia:summary",
                     "lang": lang,
-                    "crawl_date": crawl_date,
-                    "text": got["text"],
+                    "crawl_date": now_date(),
+                    "text": text,
                 }
-                docs.append(doc)
+            )
+            found = True
+            break
+
+        if not found:
+            misses += 1
+            if verbose:
+                print(f"[wiki][miss] {plant} / {disease}")
+
+    if verbose:
+        print(
+            f"[wiki] tried {total} pairs; loaded {len(docs)} docs; misses {misses}")
+    return docs
+
+
+def load_docs_from_wikipedia_seeded(
+    kb_path: Union[str, Path], lang: str = "en", min_interval: float = 0.5, verbose: bool = False
+) -> List[Doc]:
+    """Seed Wikipedia lookups from PV KB pairs, then fetch summaries."""
+    pairs = _seed_pairs_from_pv(kb_path)
+    if verbose:
+        print(f"[wiki] seeding {len(pairs)} (plant, disease) pairs from PV KB")
+    docs = load_docs_from_wikipedia(
+        pairs, lang=lang, delay=min_interval, verbose=verbose)
     if verbose:
         print(f"[wiki] loaded {len(docs)} docs from Wikipedia")
     return docs
@@ -210,6 +371,14 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=0.9,
         help="MinHash Jaccard threshold for near-duplicate chunks (0.8–0.95 typical)",
+    )
+    ap.add_argument("--wiki-lang", default="en",
+                    help="Wikipedia language code (e.g., en, fr)")
+    ap.add_argument(
+        "--wiki-interval",
+        type=float,
+        default=0.5,
+        help="Seconds between Wikipedia requests per host (polite rate limit)",
     )
     ap.add_argument("--verbose", action="store_true")
     return ap.parse_args()
@@ -521,51 +690,6 @@ def load_docs_from_plantvillage(
     return docs
 
 
-def load_docs_from_wikipedia(plants_diseases, lang="en", delay=0.25, verbose=False):
-    sess = make_session()
-    robots = Robots()
-    base = f"https://{lang}.wikipedia.org"
-    docs = []
-    for plant, disease in plants_diseases:  # iterate needed pairs
-        candidates = [
-            disease,
-            f"{plant} {disease}",
-        ]
-        found = None
-        for cand in candidates:
-            title = urllib.parse.quote(cand.replace(" ", "_"))
-            url = f"{base}/api/rest_v1/page/summary/{title}"
-            if not robots.allowed(url, ua=USER_AGENT):
-                if verbose:
-                    print(f"[wiki][skip robots] {url}")
-                continue
-            r = sess.get(url, timeout=10)
-            time.sleep(delay)
-            if r.status_code != 200:
-                continue
-            data = r.json()
-            if data.get("type") == "disambiguation" or not data.get("extract"):
-                continue
-            text = normalize_to_markdown(data["extract"])
-            text = _strip_leading_title_repeat(text, disease)
-            docs.append({
-                "doc_id": str(uuid.uuid4()),
-                "url": (data.get("content_urls", {}).get("desktop", {}) or {}).get("page", f"{base}/wiki/{title}"),
-                "title": data.get("title") or f"{plant} — {disease}",
-                "plant": plant,
-                "disease": disease,
-                "section": "wikipedia:summary",
-                "lang": lang,
-                "crawl_date": now_date(),
-                "text": text,
-            })
-            found = True
-            break
-        if verbose and not found:
-            print(f"[wiki][miss] {plant} / {disease}")
-    return docs
-
-
 def build_kb(
     sources: List[str],
     out_dir: Union[str, Path],
@@ -575,6 +699,8 @@ def build_kb(
     overlap: int,
     dedup_method: str,
     dedup_threshold: float = 0.9,
+    wiki_lang: str = "en",
+    wiki_interval: float = 0.5,
     verbose: bool = False,
 ) -> Path:
     """Main pipeline: load docs, chunk, optionally dedup, and write manifest."""
@@ -586,7 +712,11 @@ def build_kb(
     if "plantvillage" in srcs:
         docs.extend(load_docs_from_plantvillage(kb_path, verbose=verbose))
     if "wikipedia" in srcs:
-        docs.extend(load_docs_from_wikipedia_seeded(kb_path, verbose=verbose))
+        docs.extend(
+            load_docs_from_wikipedia_seeded(
+                kb_path, lang=wiki_lang, min_interval=wiki_interval, verbose=verbose
+            )
+        )
 
     if not docs:
         raise RuntimeError("No documents loaded. Check --sources and inputs.")
@@ -644,6 +774,8 @@ def main() -> int:
             overlap=args.overlap,
             dedup_method=args.dedup,
             dedup_threshold=args.dedup_threshold,
+            wiki_lang=args.wiki_lang,
+            wiki_interval=args.wiki_interval,
             verbose=args.verbose,
         )
         if args.verbose:

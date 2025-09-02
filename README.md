@@ -113,6 +113,9 @@ streamlit run src/interface/streamlit_app.py
 uvicorn src.interface.api:app --host 0.0.0.0 --port 8000
 ```
 
+## Dataset
+See docs/data_card.md for sources, build steps, and limitations.
+
 ## Notes
 
 - Place unversioned datasets/docs in data/raw, data/processed, data/kb (see .gitignore).
