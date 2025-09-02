@@ -62,26 +62,26 @@ How to build (current state):
 ## Milestone 2 — Retrieval (Hybrid Search)
 Goal: High‑recall retrieval fusing lexical + vector.
 
-- [ ] Lexical search
-  - [ ] Option A: lightweight BM25 (e.g., `rank_bm25`/Whoosh)
+- [~] Lexical search
+  - [x] Option A: lightweight BM25 (rank_bm25 over candidates)
   - [ ] Option B: Elasticsearch/OpenSearch (containerized)
-- [ ] Vector search
-  - [ ] Embedding model (e.g., BGE‑small or GTE‑small) via config
-  - [ ] Build FAISS (or Qdrant) index → persist under `models/index/*`
-  - [ ] Script: `src/retrieval/build_index.py` to embed + index manifest chunks
-- [ ] Hybrid fusion
-  - [ ] Reciprocal Rank Fusion (RRF) or weighted score sum
-  - [ ] Configurable `top_k_lex`, `top_k_vec`, fusion weights
-- [ ] Filters
-  - [ ] Plant/disease metadata filters
-  - [ ] Deterministic seeds for reproducibility
+- [x] Vector search
+  - [x] Embedding model via config
+  - [x] Build FAISS index → persist under models/index/*
+  - [x] Script: src/retrieval/build_index.py to embed + index manifest chunks
+- [x] Hybrid fusion
+  - [x] Reciprocal Rank Fusion (RRF) or weighted score sum
+  - [x] Configurable top_k and fusion weights
+- [x] Filters
+  - [x] Plant/disease metadata filters
+  - [x] Deterministic seeds not needed (pure retrieval)
 - [ ] Evaluation scaffolding
-  - [ ] Mini labeled set: `data/kb/labels.jsonl` (`{"query": ..., "positives": [doc_ids]}`)
-  - [ ] Script: `src/retrieval/evaluate.py` → Recall@k, nDCG@k
-  - [ ] Tests: `tests/test_retrieval.py` (non‑empty hits; hybrid ≥ lexical on mini set)
+  - [ ] Mini labeled set: data/kb/labels.jsonl
+  - [ ] Script: src/retrieval/evaluate.py → Recall@k, nDCG@k
+  - [ ] Tests: tests/test_retrieval.py
 - [ ] Make targets
-  - [ ] `make index` (embed + build index)
-  - [ ] `make eval_retrieval` (run evaluate.py → `artifacts/retrieval_eval.csv`)
+  - [ ] make index (embed + build index)
+  - [ ] make eval_retrieval (run evaluate.py)
 
 **Acceptance checks**
 - [ ] Hybrid retrieval measurable & repeatable; metrics saved to `artifacts/`

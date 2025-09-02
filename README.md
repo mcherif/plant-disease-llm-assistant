@@ -128,6 +128,9 @@ Rebuild command (example):
 python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb --min_tokens 50 --max_tokens 400 --overlap 80 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
 ```
 
+## Retrieval
+See docs/retrieval.md for building the FAISS index, BM25, and hybrid fusion (sum/RRF) with examples.
+
 ## Notes
 
 - Place unversioned datasets/docs in data/raw, data/processed, data/kb (see .gitignore).
