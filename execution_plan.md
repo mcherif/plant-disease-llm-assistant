@@ -79,12 +79,12 @@ Goal: High‑recall retrieval fusing lexical + vector.
   - [x] Mini labeled set: data/kb/labels.jsonl
   - [x] Script: src/retrieval/evaluate.py → Recall@k, nDCG@k
   - [ ] Tests: tests/test_retrieval.py
-- [~] Make targets
-  - [ ] make index (embed + build index)
-  - [ ] make eval_retrieval (run evaluate.py)
+- [x] Make targets
+  - [x] make index (embed + build index)
+  - [x] make eval_retrieval (run evaluate.py)
 
 **Acceptance checks**
-- [ ] Hybrid retrieval measurable & repeatable; metrics saved to `artifacts/`
+- [x] Hybrid retrieval measurable & repeatable; metrics saved to `artifacts/`  <!-- artifacts/retrieval_eval/retrieval_eval.json -->
 
 ---
 
