@@ -1,4 +1,4 @@
-"""
+r"""
 Unified KB builder for PlantVillage (+ Wikipedia soon).
 
 - Reads PlantVillage KB JSON (from refresh_kb_descriptions.py)
@@ -8,16 +8,15 @@ Unified KB builder for PlantVillage (+ Wikipedia soon).
 - Writes chunks/ and a manifest (Parquet or CSV fallback)
 
 Usage:
-  python -m src.ingestion.build_kb --sources plantvillage --out data\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
+  python -m src.ingestion.build_kb --sources plantvillage --out data\\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
 """
 import argparse
 import datetime as dt
 import json
-import os
 import re
 import uuid
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Optional, Tuple, TypedDict, Union
+from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 
 class Doc(TypedDict, total=False):
