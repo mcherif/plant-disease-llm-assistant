@@ -131,6 +131,20 @@ def _sanitize_cause(text: str) -> str:
     return _collapse_repeated_word_labels(text)
 
 
+def _strip_leading_title_repeat(text: str, disease: str) -> str:
+    """Remove a leading line that repeats the disease title (e.g., 'Late Blight')."""
+    if not text or not disease:
+        return text
+    lines = text.strip().splitlines()
+    if not lines:
+        return text
+    first = lines[0].strip().strip("—:- ").casefold()
+    dz = disease.strip().strip("—:- ").casefold()
+    if first.startswith(dz):
+        return "\n".join(lines[1:]).lstrip()
+    return text
+
+
 def chunk_text_sentence_aware(
     text: str, max_tokens: int, overlap_tokens: int
 ) -> List[str]:
@@ -326,6 +340,8 @@ def load_docs_from_plantvillage(kb_path: Union[str, Path], verbose: bool = False
             # Sanitize known noisy sections
             if cause:
                 cause = _sanitize_cause(cause)
+            if desc:
+                desc = _strip_leading_title_repeat(desc, disease)
             parts = []
             if desc:
                 parts.append(f"# {title}\n\n{desc}")
