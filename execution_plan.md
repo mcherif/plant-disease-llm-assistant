@@ -90,16 +90,17 @@ Goal: High‑recall retrieval fusing lexical + vector.
 ## Milestone 3 — LLM Integration (RAG)
 Goal: Grounded answers with citations.
 
-- [ ] RAG pipeline: `src/llm/rag_pipeline.py`
-  - [ ] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
-  - [ ] Enforce citations (every claim comes from context with source URLs/titles)
+- [x] RAG pipeline: `src/llm/rag_pipeline.py`
+  - [~] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
+  - [~] Enforce citations (prompt instructs citations; add checks/tests)
   - [ ] Refusal/guardrails for out‑of‑scope or insufficient context
-- [ ] Prompt templates: `src/llm/prompts/`
-  - [ ] Answer template with explicit citation slots
-  - [ ] System rules: factual, concise, cite; no speculation
+- [~] Prompt templates: `src/llm/prompts/`
+  - [ ] Answer template with explicit citation slots (add `src/llm/prompts/answer.txt`)
+  - [x] System rules: factual, concise, cite; no speculation (in system prompt)
   - [ ] Tests: required placeholders exist; no missing keys
-- [ ] LLM backends
-  - [ ] Pluggable: OpenAI / HF Inference / local
+- [~] LLM backends
+  - [x] OpenAI backend wired via env (OPENAI_API_KEY, OPENAI_MODEL)
+  - [ ] Pluggable: HF Inference / local backends
   - [ ] Retry + backoff; timeouts; token budgeting
 - [ ] Chunk re‑ranking (e.g., MMR) before prompting
 - [ ] Make target: `make rag_local` (demo Q&A on a few queries)
@@ -113,7 +114,7 @@ Goal: Grounded answers with citations.
 Goal: Objective evaluation & basic observability.
 
 - [ ] Offline evaluation
-  - [ ] Retrieval: Recall@k, nDCG@k (from Milestone 2)
+  - [x] Retrieval: Recall@k, nDCG@k (from Milestone 2)
   - [ ] Generation: faithfulness & relevance via LLM‑as‑judge on 50–100 QA
   - [ ] Ablations: lexical‑only vs vector‑only vs hybrid
   - [ ] Save CSVs/plots to `artifacts/`
