@@ -52,30 +52,28 @@ Acceptance notes
   - relevance: 1.0
 Notes:
 - Tiny sample; expand to 50–100 queries for meaningful averages.
-- Headings like “Action Steps” come from the answer template; adjust src/llm/prompts/answer.txt to change style.
+- Headings like “Action Steps” are induced by the answer template; edit src/llm/prompts/answer.txt to change style.
 
 ## Next tasks (Milestone 4 — Evaluation & Monitoring)
 - Offline evaluation
   - [ ] Expand dataset to 50–100 mixed queries (symptoms, treatment, prevention; multiple plants).
-  - [ ] Add edge cases (ambiguous queries, low-context topics, guardrail/refusal cases).
-  - [ ] Save artifacts under artifacts/rag_eval with run metadata; skip in CI without OPENAI_API_KEY.
+  - [ ] Add edge cases (ambiguous queries, low-context topics, and guardrail/refusal cases).
+  - [ ] Run ablations (lexical-only vs vector-only vs hybrid) and compare averages.
+  - [ ] Save artifacts per run under artifacts/rag_eval with metadata; add simple plots/summary.
 - Judge robustness
   - [ ] Harden JSON parsing; validate schema and clamp scores to [0,1].
-  - [ ] Optional: add deterministic “string match” sanity checks alongside the judge.
+  - [ ] Optional: add deterministic string-match sanity checks alongside the judge.
 - Telemetry
-  - [ ] Log per-call latency and token counts from the RAG pipeline to artifacts/logs/runs.csv.
-  - [ ] Include trace IDs to correlate retrieval/generation/judge entries.
+  - [ ] Log latency, token counts, prompt/answer sizes to artifacts/logs/runs.csv.
+  - [ ] Add simple trace IDs to correlate retrieval, generation, and judge entries.
 - Reporting
-  - [ ] Simple plotting/notebook to visualize score distributions and outliers.
-  - [ ] README section describing how to interpret results and typical failure modes.
+  - [ ] Small plotting script or notebook to visualize score distributions and outliers.
+  - [ ] README section on interpreting results and common failure modes.
 - Feedback loop
   - [ ] UI thumbs‑up/down + comment → data/feedback/*.jsonl
-  - [ ] Aggregator → artifacts/feedback_report.csv
+  - [ ] Aggregation script → artifacts/feedback_report.csv
 
 ## Completed
-- Guardrails and refusals — Done
-  - No-context refusal with plant-filter fallback and early return.
-  - Test: tests/test_guardrails.py
-- [x] Guardrails/refusals: no-context early return with plant-filter fallback (tests/test_guardrails.py).
-- [x] Citation enforcement: append [1] when missing; ensure [n] within range (tests/test_citations.py).
-- [x] OpenAI call robustness: retry/backoff + configurable temperature/timeout.
+- [x] Guardrails/refusals: no-context early return with plant-filter fallback (tests/test_guardrails.py)
+- [x] Citation enforcement: append [1] when missing; ensure [n] within range (tests/test_citations.py)
+- [x] OpenAI call robustness: retry/backoff + configurable temperature/timeout
