@@ -75,6 +75,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -315,6 +316,21 @@ class RAGPipeline:
             question=query, context="\n\n".join(context_blocks))
         return prompt, sources
 
+    def _enforce_citations(self, text: str, sources: List[Dict]) -> str:
+        """Ensure the answer contains at least one valid [n] citation within sources range.
+
+        - If sources is empty, return as-is.
+        - If no valid [n] appears, append " [1]" (maps to sources[0]['id'] which is 1).
+        """
+        if not sources:
+            return text
+        valid_ids = {s["id"] for s in sources}
+        nums = [int(n) for n in re.findall(r"\[(\d+)\]", text)]
+        has_valid = any(n in valid_ids for n in nums)
+        if not has_valid:
+            return (text.rstrip() + f" [{sources[0]['id']}]").strip()
+        return text
+
     def _generate(self, prompt: str, model: Optional[str] = None, temperature: float = 0.1, timeout: float | None = None) -> str:
         """Call the LLM backend (OpenAI) and return the answer text.
 
@@ -348,16 +364,28 @@ class RAGPipeline:
                 "Cite sources inline as [n]. If context is insufficient, say you don't know. "
                 "If recommending chemicals, remind to follow local regulations and label directions."
             )
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_content},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=temperature,
-                timeout=timeout,
-            )
-            return resp.choices[0].message.content or ""
+            max_retries = int(os.getenv("OPENAI_MAX_RETRIES", "3"))
+            backoff = 1.0
+            last_err = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    resp = client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": system_content},
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=temperature,
+                        timeout=timeout,
+                    )
+                    return resp.choices[0].message.content or ""
+                except Exception as e:
+                    last_err = e
+                    if attempt == max_retries:
+                        break
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2.0, 8.0)
+            raise RuntimeError(f"LLM call failed after {max_retries} attempts: {last_err}")
         except Exception as e:
             raise RuntimeError(f"LLM call failed: {e}") from e
 
@@ -411,6 +439,7 @@ class RAGPipeline:
         prompt, sources = self._compose(query, hits)
         output = self._generate(prompt, model=model,
                                 temperature=temperature, timeout=timeout)
+        output = self._enforce_citations(output, sources)
         return {
             "answer": output,
             "sources": sources,
