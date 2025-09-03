@@ -1,11 +1,10 @@
 # Execution Plan — Plant-Disease-LLM Assistant
 
-**Milestone 0 is DONE ✅.** This plan tracks remaining work with clear acceptance checks.  
 Legend: `- [ ]` = TODO · `- [x]` = DONE · `- [~]` = IN PROGRESS
 
 ---
 
-## Milestone 0 — Foundation & Scaffolding (DONE)
+## Milestone 0 — Foundation & Scaffolding — Done
 Goal: Set the repo so everything is reproducible and testable.
 
 - [x] Project scaffold ready: `src/`, `data/`, `docs/`, `tests/`, `models/`, `artifacts/`
@@ -59,12 +58,12 @@ How to build (current state):
 
 ---
 
-## Milestone 2 — Retrieval (Hybrid Search)
+## Milestone 2 — Retrieval (Hybrid Search) — Done
 Goal: High‑recall retrieval fusing lexical + vector.
 
-- [~] Lexical search
+- [x] Lexical search
   - [x] Option A: lightweight BM25 (rank_bm25 over candidates)
-  - [ ] Option B: Elasticsearch/OpenSearch (containerized)
+  - [ ] Option B: Elasticsearch/OpenSearch (containerized) — deferred to Backlog
 - [x] Vector search
   - [x] Embedding model via config
   - [x] Build FAISS index → persist under models/index/*
@@ -75,10 +74,10 @@ Goal: High‑recall retrieval fusing lexical + vector.
 - [x] Filters
   - [x] Plant/disease metadata filters
   - [x] Deterministic seeds not needed (pure retrieval)
-- [~] Evaluation scaffolding
+- [x] Evaluation scaffolding
   - [x] Mini labeled set: data/kb/labels.jsonl
   - [x] Script: src/retrieval/evaluate.py → Recall@k, nDCG@k
-  - [ ] Tests: tests/test_retrieval.py
+  - [x] Tests: tests/test_retrieval.py
 - [x] Make targets
   - [x] make index (embed + build index)
   - [x] make eval_retrieval (run evaluate.py)
