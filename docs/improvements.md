@@ -41,7 +41,41 @@ Acceptance notes
 - Each task comes with unit tests or smoke tests, and produces artifacts where applicable.
 - Update execution_plan.md as items land (Done/In Progress).
 
+## Current evaluation snapshot (Milestone 4 kick-off)
+- Dataset: data/kb/labels.jsonl
+- Index: models/index/kb-faiss-bge
+- Judge model: gpt-4o-mini
+- RAG params: top_k=3, ctx_chars=1200
+- Artifacts: artifacts/rag_eval/rag_eval.json and rag_eval.csv
+- Aggregate (n=2):
+  - faithfulness: 1.0
+  - relevance: 1.0
+Notes:
+- Tiny sample; expand to 50–100 queries for meaningful averages.
+- Headings like “Action Steps” come from the answer template; adjust src/llm/prompts/answer.txt to change style.
+
+## Next tasks (Milestone 4 — Evaluation & Monitoring)
+- Offline evaluation
+  - [ ] Expand dataset to 50–100 mixed queries (symptoms, treatment, prevention; multiple plants).
+  - [ ] Add edge cases (ambiguous queries, low-context topics, guardrail/refusal cases).
+  - [ ] Save artifacts under artifacts/rag_eval with run metadata; skip in CI without OPENAI_API_KEY.
+- Judge robustness
+  - [ ] Harden JSON parsing; validate schema and clamp scores to [0,1].
+  - [ ] Optional: add deterministic “string match” sanity checks alongside the judge.
+- Telemetry
+  - [ ] Log per-call latency and token counts from the RAG pipeline to artifacts/logs/runs.csv.
+  - [ ] Include trace IDs to correlate retrieval/generation/judge entries.
+- Reporting
+  - [ ] Simple plotting/notebook to visualize score distributions and outliers.
+  - [ ] README section describing how to interpret results and typical failure modes.
+- Feedback loop
+  - [ ] UI thumbs‑up/down + comment → data/feedback/*.jsonl
+  - [ ] Aggregator → artifacts/feedback_report.csv
+
 ## Completed
 - Guardrails and refusals — Done
   - No-context refusal with plant-filter fallback and early return.
   - Test: tests/test_guardrails.py
+- [x] Guardrails/refusals: no-context early return with plant-filter fallback (tests/test_guardrails.py).
+- [x] Citation enforcement: append [1] when missing; ensure [n] within range (tests/test_citations.py).
+- [x] OpenAI call robustness: retry/backoff + configurable temperature/timeout.
