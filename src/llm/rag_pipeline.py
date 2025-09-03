@@ -33,9 +33,9 @@ Defaults and how to change
   - Global: cfg = RetrievalConfig(..., fusion="rrf", alpha=0.6); rag = RAGPipeline(cfg)
   - Per-call: rag.answer("...", fusion="none"); rag.answer("...", fusion="sum", alpha=0.5)
 - Evaluator CLI examples:
-  - python -m src.retrieval.evaluate --fusion sum --alpha 0.7
-  - python -m src.retrieval.evaluate --fusion rrf
-  - python -m src.retrieval.evaluate --fusion none
+  - python -m src/retrieval.evaluate --fusion sum --alpha 0.7
+  - python -m src/retrieval.evaluate --fusion rrf
+  - python -m src/retrieval.evaluate --fusion none
 
 Environment
 - OPENAI_API_KEY must be set to use the default OpenAI backend; OPENAI_MODEL overrides
@@ -333,18 +333,19 @@ class RAGPipeline:
             from openai import OpenAI
             client = OpenAI(api_key=api_key)
             model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+            system_content = (
+                "You are a concise assistant for gardeners and farmers. "
+                "Use simple, actionable language and practical steps to assist them with identifying plant diseases, best treatment and healthy practises. "
+                "Cite sources inline as [n]. If context is insufficient, say you don't know. "
+                "If recommending chemicals, remind to follow local regulations and label directions."
+            )
             resp = client.chat.completions.create(
                 model=model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a concise assistant. Answer with citations like [1], [2]. "
-                            "If context is insufficient, say you don't know."
-                        ),
-                    },
+                    {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt},
                 ],
+                # Temperature controls randomness in token sampling, Lower (0–0.3): more deterministic and factual (good for RAG).
                 temperature=0.1,
             )
             return resp.choices[0].message.content or ""

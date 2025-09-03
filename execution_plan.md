@@ -14,6 +14,7 @@ Goal: Set the repo so everything is reproducible and testable.
 - [x] Basic tests: `pytest -q` runs at least one placeholder test
 - [x] Makefile basics (`run`, `test`, etc.)
 - [x] README Quick Start + initial architecture diagram/notes
+- [x] Testing guide: docs/testing.md (how to run mock vs. OpenAI integration tests; logging tips)
 - [x] Data wrangling kick-off: scraper started for PlantVillage & Wikipedia
 
 **Acceptance checks**
@@ -91,17 +92,20 @@ Goal: High‑recall retrieval fusing lexical + vector.
 Goal: Grounded answers with citations.
 
 - [x] RAG pipeline: `src/llm/rag_pipeline.py`
-  - [~] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
-  - [~] Enforce citations (prompt instructs citations; add checks/tests)
-  - [ ] Refusal/guardrails for out‑of‑scope or insufficient context
-- [~] Prompt templates: `src/llm/prompts/`
-  - [ ] Answer template with explicit citation slots (add `src/llm/prompts/answer.txt`)
-  - [x] System rules: factual, concise, cite; no speculation (in system prompt)
-  - [ ] Tests: required placeholders exist; no missing keys
+- [~] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
+- [~] Enforce citations (prompt instructs citations; add checks/tests)
+- [ ] Refusal/guardrails for out‑of‑scope or insufficient context
+- [x] Prompt templates: `src/llm/prompts/`
+  - [x] Answer template with explicit citation instructions (`src/llm/prompts/answer.txt`)
+  - [x] System rules: factual, concise, cite; gardener/farmer audience in system + template
+  - [x] Tests: required placeholders exist; no missing keys (`tests/test_prompts.py`)
 - [~] LLM backends
   - [x] OpenAI backend wired via env (OPENAI_API_KEY, OPENAI_MODEL)
   - [ ] Pluggable: HF Inference / local backends
   - [ ] Retry + backoff; timeouts; token budgeting
+- [x] Tests
+  - [x] Unit: mocked LLM to keep CI offline/deterministic (`tests/test_rag_pipeline.py`)
+  - [x] Integration smoke: real OpenAI call when OPENAI_API_KEY is set (verbosity via pytest.ini)
 - [ ] Chunk re‑ranking (e.g., MMR) before prompting
 - [ ] Make target: `make rag_local` (demo Q&A on a few queries)
 

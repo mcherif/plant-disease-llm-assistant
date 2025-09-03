@@ -18,6 +18,9 @@ import pytest
 import faiss  # type: ignore
 from sentence_transformers import SentenceTransformer
 
+# Ensure the test is skipped if sentence_transformers isn't available
+pytest.importorskip("sentence_transformers")
+
 
 def _load_meta_cfg(index_dir: Path):
     """Load meta.jsonl and config.json from the given index directory.

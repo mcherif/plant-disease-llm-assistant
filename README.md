@@ -131,6 +131,12 @@ python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb 
 ## Retrieval
 See docs/retrieval.md for building the FAISS index, BM25, and hybrid fusion (sum/RRF) with examples.
 
+## Testing
+See docs/testing.md for:
+- Running all vs. selected tests (mock-only or OpenAI integration)
+- Setting/unsetting OPENAI_API_KEY on Windows PowerShell
+- Increasing pytest log verbosity for debugging
+
 ## Notes
 
 - Place unversioned datasets/docs in data/raw, data/processed, data/kb (see .gitignore).
