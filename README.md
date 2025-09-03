@@ -130,6 +130,7 @@ python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb 
 
 ## Retrieval
 See docs/retrieval.md for building the FAISS index, BM25, and hybrid fusion (sum/RRF) with examples.
+Artifacts for retrieval evaluation are documented in docs/artifacts.md.
 
 ## Testing
 See docs/testing.md for:

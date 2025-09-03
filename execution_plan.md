@@ -232,3 +232,26 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 - [ ] Hardening: Centralized config with Pydantic
 - [ ] Hardening: Persisted vector index + Make targets
 - [ ] Hardening: CI (ruff/pytest) + smoke test workflow
+
+---
+
+## Next Steps / Improvement Backlog
+
+- Guardrails and refusals (M3)
+  - Return “insufficient context” when no/weak hits; test empty retrieval path.
+- Citation enforcement (M3)
+  - Validate [n] appear and are within 1..len(sources); add fixer/regenerate path; unit tests.
+- LLM call robustness (M3)
+  - Retries with backoff, timeouts, configurable temperature/max_tokens; failure-path tests.
+- Retrieval quality (M3)
+  - Optional MMR rerank before prompt; config knobs; unit test selection changes.
+- Developer UX (M3)
+  - Make target: make rag_local; sample queries and pretty sources output.
+- Generation evaluation (M4)
+  - LLM-as-judge for faithfulness/relevance on ~50–100 QA; artifacts and skip in CI by default.
+- Telemetry/observability (M4)
+  - Log latency, token counts, prompt/answer sizes; simple trace IDs; artifacts/logs/.
+- Optional backends (M3/M4)
+  - HF/local backend switch (backend=openai|hf) for offline runs.
+- UI follow-up (M3)
+  - Streamlit wiring to pipeline; audience selector (farmer/gardener); source links.

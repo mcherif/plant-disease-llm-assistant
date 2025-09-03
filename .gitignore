@@ -230,3 +230,7 @@ data/disease_and_pests/
 # Retrieval indexes (FAISS, metadata)
 models/index/
 !models/index/.gitkeep
+
+# Evaluation artifacts
+artifacts/
+!artifacts/.gitkeep
