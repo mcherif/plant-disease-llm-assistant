@@ -137,6 +137,9 @@ See docs/testing.md for:
 - Setting/unsetting OPENAI_API_KEY on Windows PowerShell
 - Increasing pytest log verbosity for debugging
 
+## Roadmap / Improvements
+See docs/improvements.md for the prioritized backlog, rationale, and test ideas.
+
 ## Notes
 
 - Place unversioned datasets/docs in data/raw, data/processed, data/kb (see .gitignore).
