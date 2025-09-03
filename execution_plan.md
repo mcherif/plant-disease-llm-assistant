@@ -120,7 +120,11 @@ Goal: Objective evaluation & basic observability.
 
 - [ ] Offline evaluation
   - [x] Retrieval: Recall@k, nDCG@k (from Milestone 2)
-  - [ ] Generation: faithfulness & relevance via LLM‑as‑judge on 50–100 QA
+  - [~] Generation: faithfulness & relevance via LLM‑as‑judge on 50–100 QA
+    - [x] Evaluator CLI: `src/eval/evaluate_rag.py` → writes `artifacts/rag_eval/`
+    - [x] CLI smoke test: `tests/test_eval_rag.py` (skips without OPENAI_API_KEY)
+    - [x] Make target: `make eval_rag`
+    - [ ] Run full set (50–100 QA) and add plots/summary
   - [ ] Ablations: lexical‑only vs vector‑only vs hybrid
   - [ ] Save CSVs/plots to `artifacts/`
 - [ ] Tracing/telemetry
@@ -129,7 +133,6 @@ Goal: Objective evaluation & basic observability.
 - [ ] Feedback loop
   - [ ] UI thumbs‑up/down + comment → `data/feedback/*.jsonl`
   - [ ] Aggregation script → `artifacts/feedback_report.csv`
-- [ ] Make target: `make eval_rag` (runs LLM‑judge → `artifacts/rag_eval.csv`)
 
 **Acceptance checks**
 - [ ] Reproducible eval runs with artifacts + README section on interpreting results
