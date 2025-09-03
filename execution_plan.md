@@ -170,6 +170,7 @@ Next steps (M5.x)
 - [ ] Prompting: enforce citations and stricter grounding
 - [ ] API: FastAPI /rag endpoint with env-configurable index/top_k
 - [ ] Feedback: thumbs up/down logging to data/feedback
+- [ ] Update Hugging Face Space/app repo (sync Streamlit app, README, and secrets)
 
 ---
 
