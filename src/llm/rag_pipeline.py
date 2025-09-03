@@ -78,7 +78,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import faiss  # type: ignore
 import numpy as np
@@ -95,6 +95,10 @@ def _minmax(x: np.ndarray) -> np.ndarray:
     """Min–max normalize a 1D score array to [0, 1]; returns zeros if degenerate."""
     mn, mx = float(x.min()), float(x.max())
     return (x - mn) / (mx - mn + 1e-12) if mx > mn else np.zeros_like(x)
+
+
+def _norm(v: Any) -> str:
+    return str(v or "").strip().lower()
 
 
 @dataclass
@@ -189,28 +193,12 @@ class RAGPipeline:
         self,
         query: str,
         plant: Optional[str] = None,
+        disease: Optional[str] = None,
         top_k: Optional[int] = None,
         fusion: Optional[str] = None,
         alpha: Optional[float] = None,
     ) -> List[Tuple[float, int]]:
-        """Retrieve top candidates from FAISS and apply optional BM25 fusion + filters.
-
-        Args:
-            query: User question (prefix "query: " added automatically if needed).
-            plant: Optional plant name to filter results by exact match on metadata.
-            top_k: Override for number of results to return (defaults to cfg.top_k).
-            fusion: "none" | "sum" | "rrf" overrides cfg.fusion.
-            alpha: Weight for vector score in sum fusion; overrides cfg.alpha.
-
-        Returns:
-            List of (vector_score, meta_index) sorted by fused rank, truncated to top_k.
-            The score is the original vector score (pre-fusion), useful for diagnostics.
-
-        Notes:
-            - BM25 is computed only on the candidate pool, not the full corpus, for speed.
-            - pretopk is set to max(50, top_k) to ensure enough candidates for fusion.
-            - Plant filter is applied after fusion/ordering.
-        """
+        """Return a list of (score, idx) hits into self.meta."""
         # Respect explicit 0 (useful for tests) and only fall back when None
         k = self.cfg.top_k if top_k is None else int(top_k)
         if k <= 0:
@@ -263,11 +251,13 @@ class RAGPipeline:
 
         # Apply metadata filters and truncate to top_k
         results: List[Tuple[float, int]] = []
-        for s, i in cand:
-            m = self.meta[i]
-            if plant and str(m.get("plant", "")).lower() != str(plant).lower():
+        for s, idx in cand:  # cand must be (score, idx)
+            meta = self.meta[idx]
+            if plant and _norm(meta.get("plant")) != _norm(plant):
                 continue
-            results.append((s, i))
+            if disease and _norm(meta.get("disease")) != _norm(disease):
+                continue
+            results.append((float(s), int(idx)))
             if len(results) >= k:
                 break
         return results
@@ -385,7 +375,8 @@ class RAGPipeline:
                         break
                     time.sleep(backoff)
                     backoff = min(backoff * 2.0, 8.0)
-            raise RuntimeError(f"LLM call failed after {max_retries} attempts: {last_err}")
+            raise RuntimeError(
+                f"LLM call failed after {max_retries} attempts: {last_err}")
         except Exception as e:
             raise RuntimeError(f"LLM call failed: {e}") from e
 
@@ -393,18 +384,20 @@ class RAGPipeline:
         self,
         query: str,
         plant: Optional[str] = None,
+        disease: Optional[str] = None,
         top_k: Optional[int] = None,
         fusion: Optional[str] = None,
         alpha: Optional[float] = None,
         model: Optional[str] = None,
-        temperature: float = 0.1,
-        timeout: float | None = None,
-    ) -> Dict:
+        temperature: float = 0.0,
+        timeout: Optional[float] = None,
+    ) -> Dict[str, Any]:
         """Run the full RAG flow and return answer plus sources and raw retrieval.
 
         Args:
             query: User question to be answered.
             plant: Optional plant filter for retrieval.
+            disease: Optional disease filter for retrieval.
             top_k: Override for number of chunks used as context.
             fusion: Fusion strategy override ("none" | "sum" | "rrf").
             alpha: Weight override for "sum" fusion.
@@ -420,28 +413,37 @@ class RAGPipeline:
             - sources[n-1]["id"] equals citation index [n] used in the answer.
             - retrieved[i]["meta"] is an element from meta.jsonl (unchanged).
         """
-        # Initial retrieval (respect plant filter if provided)
-        hits = self._retrieve(query, plant=plant,
-                              top_k=top_k, fusion=fusion, alpha=alpha)
+        # Retrieve
+        k = top_k or self.cfg.top_k
+        hits: List[Tuple[float, int]] = self._retrieve(
+            query=query, plant=plant, disease=disease, top_k=k, fusion=fusion, alpha=alpha
+        )
 
-        # Fallback: if plant filter produced no hits, retry once without plant filter
-        if not hits and plant:
-            hits = self._retrieve(
-                query, plant=None, top_k=top_k, fusion=fusion, alpha=alpha)
+        # Build prompt with numbered contexts
+        contexts: List[str] = [self.meta[idx].get("text", "") for _, idx in hits]
+        context_block = "\n\n".join(f"[{i+1}] {c}" for i, c in enumerate(contexts))
+        header_bits = []
+        if plant: header_bits.append(f"Plant: {plant}")
+        if disease: header_bits.append(f"Disease: {disease}")
+        header = " | ".join(header_bits) or "No labels"
+        prompt = (
+            "You are a plant pathology assistant. Use ONLY the provided context.\n"
+            f"{header}\n\n"
+            f"Question:\n{query}\n\n"
+            f"Context:\n{context_block}\n\n"
+            "Instructions:\n"
+            "- Answer strictly about the plant/disease above. If not covered by context, say you don’t know.\n"
+            "- Do not introduce other crops/diseases.\n"
+            "- Cite sources as [n] matching the numbered context snippets.\n"
+        )
+        answer = self._generate(prompt, model=model, temperature=temperature, timeout=timeout)
 
-        # Guardrail: refuse if still no context; do NOT call the LLM
-        if not hits:
-            return {
-                "answer": self.cfg.refusal_message,
-                "sources": [],
-                "retrieved": [],
-            }
-        prompt, sources = self._compose(query, hits)
-        output = self._generate(prompt, model=model,
-                                temperature=temperature, timeout=timeout)
-        output = self._enforce_citations(output, sources)
-        return {
-            "answer": output,
-            "sources": sources,
-            "retrieved": [{"score": float(s), "meta": self.meta[i]} for s, i in hits],
-        }
+        # Shape outputs for UI
+        retrieved = [{"score": float(s), "meta": self.meta[idx]} for s, idx in hits]
+        sources = [{
+            "id": i + 1,
+            "title": self.meta[idx].get("title") or self.meta[idx].get("disease") or "Source",
+            "url": self.meta[idx].get("url", ""),
+        } for i, (_, idx) in enumerate(hits)]
+
+        return {"answer": answer, "retrieved": retrieved, "sources": sources}

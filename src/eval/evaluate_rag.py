@@ -33,6 +33,7 @@ import json
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -95,6 +96,7 @@ def _judge(client: Any, model: str, question: str, answer: str, contexts: List[s
             {"role": "user", "content": prompt},
         ],
         temperature=0.0,
+        max_tokens=300,
     )
     content = (resp.choices[0].message.content or "").strip()
     try:
@@ -118,15 +120,28 @@ def _judge(client: Any, model: str, question: str, answer: str, contexts: List[s
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Evaluate RAG answers with LLM-as-judge.")
-    ap.add_argument("--dataset", type=Path, required=True, help="Path to JSONL with fields: question, plant (optional).")
-    ap.add_argument("--index", type=Path, default=Path("models/index/kb-faiss-bge"), help="Retrieval index directory.")
-    ap.add_argument("--out", type=Path, default=Path("artifacts/rag_eval"), help="Output directory for artifacts.")
-    ap.add_argument("--n", type=int, default=50, help="Max examples to evaluate (cap).")
-    ap.add_argument("--judge-model", type=str, default=os.getenv("OPENAI_MODEL", "gpt-4o-mini"), help="Judge model name.")
-    ap.add_argument("--top-k", type=int, default=3, help="Top-k chunks for RAG.")
-    ap.add_argument("--ctx-chars", type=int, default=1200, help="Max total characters of context shown to judge.")
-    ap.add_argument("--skip-if-no-key", action="store_true", help="Exit 0 if OPENAI_API_KEY is missing.")
+    ap = argparse.ArgumentParser(
+        description="Evaluate RAG answers with LLM-as-judge.")
+    ap.add_argument("--dataset", type=Path, required=True,
+                    help="Path to JSONL with fields: question, plant (optional).")
+    ap.add_argument("--index", type=Path, default=Path("models/index/kb-faiss-bge"),
+                    help="Retrieval index directory.")
+    ap.add_argument("--out", type=Path, default=Path("artifacts/rag_eval"),
+                    help="Output directory for artifacts.")
+    ap.add_argument("--n", type=int, default=50,
+                    help="Max examples to evaluate (cap).")
+    ap.add_argument("--judge-model", type=str, default=os.getenv(
+        "OPENAI_MODEL", "gpt-4o-mini"), help="Judge model name.")
+    ap.add_argument("--top-k", type=int, default=3,
+                    help="Top-k chunks for RAG.")
+    ap.add_argument("--ctx-chars", type=int, default=1200,
+                    help="Max total characters of context shown to judge.")
+    ap.add_argument("--skip-if-no-key", action="store_true",
+                    help="Exit 0 if OPENAI_API_KEY is missing.")
+    ap.add_argument("--timeout", type=float, default=30.0,
+                    help="Per OpenAI call timeout (seconds).")
+    ap.add_argument("--progress-every", type=int, default=5,
+                    help="Print progress every N examples.")
     args = ap.parse_args()
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -145,13 +160,15 @@ def main() -> int:
 
     cfg = RetrievalConfig(index_dir=args.index, top_k=args.top_k, device="cpu")
     rag = RAGPipeline(cfg)
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, timeout=args.timeout)
 
     per_rows: List[Dict[str, Any]] = []
     agg = {"faithfulness": 0.0, "relevance": 0.0}
     count = 0
 
-    for ex in rows:
+    t0 = time.perf_counter()
+    total_n = len(rows)
+    for i, ex in enumerate(rows, start=1):
         q = ex.get("question") or ex.get("query") or ""
         plant = ex.get("plant")
         if not q:
@@ -174,7 +191,8 @@ def main() -> int:
         try:
             scores = _judge(client, args.judge_model, q, answer, ctx_texts)
         except Exception as e:
-            scores = JudgeScores(faithfulness=0.0, relevance=0.0, reasoning=f"judge_error: {e}")
+            scores = JudgeScores(
+                faithfulness=0.0, relevance=0.0, reasoning=f"judge_error: {e}")
 
         per_rows.append({
             "question": q,
@@ -188,6 +206,13 @@ def main() -> int:
         agg["relevance"] += scores.relevance
         count += 1
 
+        if i % max(1, args.progress_every) == 0:
+            elapsed = time.perf_counter() - t0
+            rate = i / elapsed if elapsed > 0 else 0.0
+            eta = (total_n - i) / rate if rate > 0 else float("inf")
+            print(f"[{i}/{total_n}] avg F={agg['faithfulness']/i:.2f} R={agg['relevance']/i:.2f} | "
+                  f"{elapsed:.1f}s elapsed, ~{eta:.1f}s ETA", file=sys.stderr, flush=True)
+
     if count:
         agg["faithfulness"] = round(agg["faithfulness"] / count, 3)
         agg["relevance"] = round(agg["relevance"] / count, 3)
@@ -195,7 +220,8 @@ def main() -> int:
     # Save CSV
     csv_path = args.out / "rag_eval.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["question", "plant", "faithfulness", "relevance", "reasoning", "answer"])
+        w = csv.DictWriter(f, fieldnames=[
+                           "question", "plant", "faithfulness", "relevance", "reasoning", "answer"])
         w.writeheader()
         for r in per_rows:
             w.writerow(r)
@@ -214,7 +240,8 @@ def main() -> int:
         "aggregate": {"faithfulness": agg["faithfulness"], "relevance": agg["relevance"]},
         "per_query": per_rows,
     }
-    (args.out / "rag_eval.json").write_text(json.dumps(out_json, ensure_ascii=False, indent=2), encoding="utf-8")
+    (args.out / "rag_eval.json").write_text(json.dumps(out_json,
+                                                       ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Wrote: {csv_path} and {args.out/'rag_eval.json'}")
     return 0

@@ -45,8 +45,7 @@ def test_evaluate_rag_cli_smoke(tmp_path):
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=str(repo_root))
     assert r.returncode == 0
 
-    has_key = "OPENAI_API_KEY" in os.environ and bool(
-        os.environ["OPENAI_API_KEY"])
+    has_key = "OPENAI_API_KEY" in os.environ and bool(os.environ["OPENAI_API_KEY"])
     json_path = out / "rag_eval.json"
     csv_path = out / "rag_eval.csv"
 

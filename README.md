@@ -113,6 +113,15 @@ streamlit run src/interface/streamlit_app.py
 uvicorn src.interface.api:app --host 0.0.0.0 --port 8000
 ```
 
+## Web UI (Streamlit)
+
+A simple UI to classify an image and ask a grounded question.
+
+- Quick start (Windows):
+  - `make ui`
+  - or `set PYTHONPATH=.&& streamlit run src\interface\streamlit_app.py`
+- Docs: see [docs/STREAMLIT.md](docs/STREAMLIT.md)
+
 ## Dataset
 See docs/data_card.md for sources, build steps, and limitations.
 

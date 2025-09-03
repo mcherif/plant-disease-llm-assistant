@@ -2,7 +2,7 @@
 # Requires GNU Make (e.g., Chocolatey: choco install make -y).
 # Use TABs (not spaces) to indent recipe lines.
 
-.PHONY: install kb kb-all index eval_retrieval eval_rag
+.PHONY: install kb kb-all index eval_retrieval eval_rag rag_qa eval_rag_full ui api
 
 install:
 	pip install -r requirements.txt
@@ -29,3 +29,15 @@ eval_retrieval:
 # Artifacts: artifacts/rag_eval/rag_eval.json and rag_eval.csv
 eval_rag:
 	python -m src.eval.evaluate_rag --dataset data/kb/labels.jsonl --out artifacts/rag_eval --n 50 --skip-if-no-key
+
+rag_qa:
+	python -m src.eval.make_rag_qa
+
+eval_rag_full:
+	python -m src.eval.evaluate_rag --dataset data/eval/rag_qa.jsonl --out artifacts/rag_eval --n 120 --skip-if-no-key
+
+ui:
+	set PYTHONPATH=.&& streamlit run src\interface\streamlit_app.py
+
+api:
+	set PYTHONPATH=.&& uvicorn src.interface.api:app --reload --host 127.0.0.1 --port 8000
