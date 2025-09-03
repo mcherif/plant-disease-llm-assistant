@@ -94,20 +94,21 @@ Goal: Grounded answers with citations.
 - [x] RAG pipeline: `src/llm/rag_pipeline.py`
 - [~] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
 - [~] Enforce citations (prompt instructs citations; add checks/tests)
-- [ ] Refusal/guardrails for out‑of‑scope or insufficient context
+- [x] Refusal/guardrails for empty context (no hits)
+  - Early return with a polite refusal + one fallback retrieval without plant filter
+  - Test: [`tests/test_guardrails.py`](tests/test_guardrails.py)
 - [x] Prompt templates: `src/llm/prompts/`
   - [x] Answer template with explicit citation instructions (`src/llm/prompts/answer.txt`)
   - [x] System rules: factual, concise, cite; gardener/farmer audience in system + template
   - [x] Tests: required placeholders exist; no missing keys (`tests/test_prompts.py`)
-- [~] LLM backends
-  - [x] OpenAI backend wired via env (OPENAI_API_KEY, OPENAI_MODEL)
-  - [ ] Pluggable: HF Inference / local backends
-  - [ ] Retry + backoff; timeouts; token budgeting
+- [~] LLM backends/robustness
+  - [x] Expose temperature and timeout in [`src/llm/rag_pipeline.py`](src/llm/rag_pipeline.py) (answer/_generate)
+  - [ ] Retry + backoff
+  - [ ] Token budgeting
 - [x] Tests
-  - [x] Unit: mocked LLM to keep CI offline/deterministic (`tests/test_rag_pipeline.py`)
-  - [x] Integration smoke: real OpenAI call when OPENAI_API_KEY is set (verbosity via pytest.ini)
-- [ ] Chunk re‑ranking (e.g., MMR) before prompting
-- [ ] Make target: `make rag_local` (demo Q&A on a few queries)
+  - [x] Unit: mocked LLM (`tests/test_rag_pipeline.py`)
+  - [x] Guardrail: refuse on no-context without calling LLM (`tests/test_guardrails.py`)
+  - [x] Integration smoke (OpenAI) when key is set
 
 **Acceptance checks**
 - [ ] End‑to‑end: question → grounded answer with citations within target latency

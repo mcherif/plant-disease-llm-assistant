@@ -114,6 +114,12 @@ class RetrievalConfig:
     fusion: str = "sum"  # none | sum | rrf
     alpha: float = 0.7
     top_k: int = 4
+    # refuse if best retrieval score < min_score
+    min_score: float | None = None
+    refusal_message: str = (
+        "Sorry, I don't have enough context to answer confidently. "
+        "Try rephrasing the question or narrowing by plant/disease."
+    )
 
 
 class RAGPipeline:
@@ -204,7 +210,10 @@ class RAGPipeline:
             - pretopk is set to max(50, top_k) to ensure enough candidates for fusion.
             - Plant filter is applied after fusion/ordering.
         """
-        k = top_k or self.cfg.top_k
+        # Respect explicit 0 (useful for tests) and only fall back when None
+        k = self.cfg.top_k if top_k is None else int(top_k)
+        if k <= 0:
+            return []
         fusion = fusion or self.cfg.fusion
         alpha = alpha if alpha is not None else self.cfg.alpha
 
@@ -306,7 +315,7 @@ class RAGPipeline:
             question=query, context="\n\n".join(context_blocks))
         return prompt, sources
 
-    def _generate(self, prompt: str, model: Optional[str] = None) -> str:
+    def _generate(self, prompt: str, model: Optional[str] = None, temperature: float = 0.1, timeout: float | None = None) -> str:
         """Call the LLM backend (OpenAI) and return the answer text.
 
         Args:
@@ -335,7 +344,7 @@ class RAGPipeline:
             model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
             system_content = (
                 "You are a concise assistant for gardeners and farmers. "
-                "Use simple, actionable language and practical steps to assist them with identifying plant diseases, best treatment and healthy practises. "
+                "Use simple, actionable language and practical steps to assist them with identifying plant diseases, best treatment and healthy practices. "
                 "Cite sources inline as [n]. If context is insufficient, say you don't know. "
                 "If recommending chemicals, remind to follow local regulations and label directions."
             )
@@ -345,12 +354,11 @@ class RAGPipeline:
                     {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt},
                 ],
-                # Temperature controls randomness in token sampling, Lower (0–0.3): more deterministic and factual (good for RAG).
-                temperature=0.1,
+                temperature=temperature,
+                timeout=timeout,
             )
             return resp.choices[0].message.content or ""
         except Exception as e:
-            # Provide actionable error context upstream
             raise RuntimeError(f"LLM call failed: {e}") from e
 
     def answer(
@@ -361,6 +369,8 @@ class RAGPipeline:
         fusion: Optional[str] = None,
         alpha: Optional[float] = None,
         model: Optional[str] = None,
+        temperature: float = 0.1,
+        timeout: float | None = None,
     ) -> Dict:
         """Run the full RAG flow and return answer plus sources and raw retrieval.
 
@@ -382,10 +392,25 @@ class RAGPipeline:
             - sources[n-1]["id"] equals citation index [n] used in the answer.
             - retrieved[i]["meta"] is an element from meta.jsonl (unchanged).
         """
+        # Initial retrieval (respect plant filter if provided)
         hits = self._retrieve(query, plant=plant,
                               top_k=top_k, fusion=fusion, alpha=alpha)
+
+        # Fallback: if plant filter produced no hits, retry once without plant filter
+        if not hits and plant:
+            hits = self._retrieve(
+                query, plant=None, top_k=top_k, fusion=fusion, alpha=alpha)
+
+        # Guardrail: refuse if still no context; do NOT call the LLM
+        if not hits:
+            return {
+                "answer": self.cfg.refusal_message,
+                "sources": [],
+                "retrieved": [],
+            }
         prompt, sources = self._compose(query, hits)
-        output = self._generate(prompt, model=model)
+        output = self._generate(prompt, model=model,
+                                temperature=temperature, timeout=timeout)
         return {
             "answer": output,
             "sources": sources,
