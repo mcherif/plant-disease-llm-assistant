@@ -88,30 +88,30 @@ Goal: High‑recall retrieval fusing lexical + vector.
 
 ---
 
-## Milestone 3 — LLM Integration (RAG)
+## Milestone 3 — LLM Integration (RAG) — Done
 Goal: Grounded answers with citations.
 
 - [x] RAG pipeline: `src/llm/rag_pipeline.py`
-- [~] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
-- [~] Enforce citations (prompt instructs citations; add checks/tests)
+- [x] Steps: retrieve → select → prompt‑compose → call LLM → postprocess
+- [x] Enforce citations (postprocess verifies/ensures [n] within range)
 - [x] Refusal/guardrails for empty context (no hits)
   - Early return with a polite refusal + one fallback retrieval without plant filter
   - Test: [`tests/test_guardrails.py`](tests/test_guardrails.py)
 - [x] Prompt templates: `src/llm/prompts/`
   - [x] Answer template with explicit citation instructions (`src/llm/prompts/answer.txt`)
-  - [x] System rules: factual, concise, cite; gardener/farmer audience in system + template
   - [x] Tests: required placeholders exist; no missing keys (`tests/test_prompts.py`)
-- [~] LLM backends/robustness
-  - [x] Expose temperature and timeout in [`src/llm/rag_pipeline.py`](src/llm/rag_pipeline.py) (answer/_generate)
-  - [ ] Retry + backoff
-  - [ ] Token budgeting
+- [x] LLM backends/robustness
+  - [x] Temperature and timeout in generation calls
+  - [x] Retry with simple exponential backoff
+  - [ ] Token budgeting (defer to improvements)
 - [x] Tests
   - [x] Unit: mocked LLM (`tests/test_rag_pipeline.py`)
-  - [x] Guardrail: refuse on no-context without calling LLM (`tests/test_guardrails.py`)
+  - [x] Guardrail: refuse on no-context (`tests/test_guardrails.py`)
+  - [x] Citation enforcement (`tests/test_citations.py`)
   - [x] Integration smoke (OpenAI) when key is set
 
 **Acceptance checks**
-- [ ] End‑to‑end: question → grounded answer with citations within target latency
+- [x] End‑to‑end: question → grounded answer with citations within target latency
 
 ---
 
@@ -238,13 +238,7 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 
 ## Next Steps / Improvement Backlog
 
-- Guardrails and refusals (M3)
-  - Return “insufficient context” when no/weak hits; test empty retrieval path.
-- Citation enforcement (M3)
-  - Validate [n] appear and are within 1..len(sources); add fixer/regenerate path; unit tests.
-- LLM call robustness (M3)
-  - Retries with backoff, timeouts, configurable temperature/max_tokens; failure-path tests.
-- Retrieval quality (M3)
+- Retrieval quality
   - Optional MMR rerank before prompt; config knobs; unit test selection changes.
 - Developer UX (M3)
   - Make target: make rag_local; sample queries and pretty sources output.
