@@ -8,6 +8,7 @@ What it checks
 Why it’s stable
 - Uses --skip-if-no-key to avoid failing in CI without credentials.
 - Limits examples to a tiny subset for speed.
+- Runs the script as a module (-m) so package imports (src.*) resolve.
 
 Skip conditions
 - Skips if the labels dataset is missing.
@@ -18,7 +19,7 @@ import subprocess
 import sys
 
 DATASET = Path("data/kb/labels.jsonl")
-SCRIPT = Path("src/eval/evaluate_rag.py")
+MODULE = "src.eval.evaluate_rag"  # run as module so src.* imports resolve
 
 
 def test_evaluate_rag_cli_smoke(tmp_path):
@@ -29,7 +30,8 @@ def test_evaluate_rag_cli_smoke(tmp_path):
     out = tmp_path / "rag_eval"
     cmd = [
         sys.executable,
-        str(SCRIPT),
+        "-m",
+        MODULE,
         "--dataset",
         str(DATASET),
         "--out",
@@ -38,10 +40,13 @@ def test_evaluate_rag_cli_smoke(tmp_path):
         "2",
         "--skip-if-no-key",
     ]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    # Ensure working dir is project root so relative paths resolve
+    repo_root = Path(__file__).resolve().parents[1]
+    r = subprocess.run(cmd, capture_output=True, text=True, cwd=str(repo_root))
     assert r.returncode == 0
 
-    has_key = "OPENAI_API_KEY" in os.environ and bool(os.environ["OPENAI_API_KEY"])
+    has_key = "OPENAI_API_KEY" in os.environ and bool(
+        os.environ["OPENAI_API_KEY"])
     json_path = out / "rag_eval.json"
     csv_path = out / "rag_eval.csv"
 
