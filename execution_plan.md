@@ -123,34 +123,24 @@ Goals
 - Produce JSON/CSV artifacts for inspection.
 
 What’s done
-- Dataset created:
-  - data/eval/rag_qa.jsonl (120 prompts; from data/kb/manifest.parquet)
-- Evaluation run:
-  - Command:
-    - python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 120 --skip-if-no-key
-  - Judge model:
-    - Default: gpt-4o-mini (override via OPENAI_MODEL)
-  - Artifacts:
-    - artifacts/rag_eval/rag_eval.json
-    - artifacts/rag_eval/rag_eval.csv
-- Ergonomics:
-  - Judge max_tokens capped; optional progress/timeouts added.
+- [x] Dataset created: data/eval/rag_qa.jsonl (120 prompts; from data/kb/manifest.parquet)
+- [x] Evaluation run
+  - [x] Command: python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 120 --skip-if-no-key
+  - [x] Judge model: Default gpt-4o-mini (override via OPENAI_MODEL)
+  - [x] Artifacts: artifacts/rag_eval/rag_eval.json and artifacts/rag_eval/rag_eval.csv
+- [x] Ergonomics: Judge max_tokens capped; optional progress/timeouts
 
 Observations
 - Some answers show low faithfulness (claims not fully supported by retrieved context).
 - Off-topic drift when plant/disease aren’t enforced in retrieval/prompting.
 
 Queued improvements (tracked for M5.x)
-- Retrieval recall:
-  - Increase top_k to 4–5; raise ctx_chars to 1600–2000.
-  - Add reranker (e.g., bge-reranker) over top-20 to select 4–5 best chunks.
-  - Revisit chunking (700–900 tokens, overlap 120–150).
-- Answer grounding:
-  - Tighten prompt: “Use only context; if unknown, say so; cite [n].”
-  - Temperature 0; optionally drop sentences without citations in postprocess.
-- Judge visibility:
-  - Optional --save-context flag to persist judge contexts/sources.
-  - Progress + partial writes (CSV flush, partial JSON).
+- [ ] Retrieval recall: increase top_k to 4–5; raise ctx_chars to 1600–2000
+- [ ] Add reranker (e.g., bge-reranker) over top-20 to select 4–5 best chunks
+- [ ] Revisit chunking (700–900 tokens, overlap 120–150)
+- [ ] Tighten prompt: “Use only context; if unknown, say so; cite [n]”
+- [ ] Temperature 0; optionally drop sentences without citations in postprocess
+- [ ] Judge visibility: --save-context flag and partial writes (CSV flush, partial JSON)
 
 Repro/commands
 - Generate dataset:
@@ -165,22 +155,21 @@ Repro/commands
 ## Milestone 5 — Minimal UI/API
 
 What’s done
-- Streamlit UI:
-  - Classifier top-1 auto-fills detected_plant/detected_disease.
-  - Query enrichment and filters passed to RAG.
-  - Default question fallback (“What can I do to treat this?”).
-  - Sources panel with titles/URLs; Windows Make target.
-- Docs:
-  - docs/STREAMLIT.md and README links.
-- Pipeline fixes:
-  - Retrieval hits normalized to dicts with meta (no tuple .get errors).
-  - Plant/disease filters applied in retrieval/prompt.
+- [x] Streamlit UI
+  - [x] Classifier top-1 auto-fills detected_plant/detected_disease
+  - [x] Query enrichment and filters passed to RAG
+  - [x] Default question fallback (“What can I do to treat this?”)
+  - [x] Sources panel with titles/URLs; Windows Make target
+- [x] Docs: docs/STREAMLIT.md and README links
+- [x] Pipeline fixes
+  - [x] Retrieval hits normalized to dicts with meta (no tuple .get errors)
+  - [x] Plant/disease filters applied in retrieval/prompt
 
 Next steps (M5.x)
-- Retrieval: add reranker; expose fusion/alpha in UI.
-- Prompting: enforce citations and stricter grounding.
-- API: FastAPI /rag endpoint with env-configurable index/top_k.
-- Feedback: thumbs up/down logging to data/feedback.
+- [ ] Retrieval: add reranker; expose fusion/alpha in UI
+- [ ] Prompting: enforce citations and stricter grounding
+- [ ] API: FastAPI /rag endpoint with env-configurable index/top_k
+- [ ] Feedback: thumbs up/down logging to data/feedback
 
 ---
 
@@ -306,74 +295,3 @@ Milestones
   - HF/local backend switch (backend=openai|hf) for offline runs.
 - UI follow-up (M3)
   - Streamlit wiring to pipeline; audience selector (farmer/gardener); source links.
-
-# Execution Plan
-
-Status snapshot
-- M4 (RAG evaluation): Initial run completed on 120 prompts; artifacts saved. Some low faithfulness observed; improvements queued.
-- M5 (UI/API): Streamlit UI shipped with classifier → plant/disease → RAG wiring, default question fallback, and docs.
-
-## Milestone 4 — RAG evaluation
-
-Goals
-- Generate a focused QA dataset from the KB manifest.
-- Run RAG end-to-end and score answers with LLM-as-judge (faithfulness, relevance).
-- Produce JSON/CSV artifacts for inspection.
-
-What’s done
-- Dataset created:
-  - data/eval/rag_qa.jsonl (120 prompts; from data/kb/manifest.parquet)
-- Evaluation run:
-  - Command:
-    - python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 120 --skip-if-no-key
-  - Judge model:
-    - Default: gpt-4o-mini (override via OPENAI_MODEL)
-  - Artifacts:
-    - artifacts/rag_eval/rag_eval.json
-    - artifacts/rag_eval/rag_eval.csv
-- Ergonomics:
-  - Judge max_tokens capped; optional progress/timeouts added.
-
-Observations
-- Some answers show low faithfulness (claims not fully supported by retrieved context).
-- Off-topic drift when plant/disease aren’t enforced in retrieval/prompting.
-
-Queued improvements (tracked for M5.x)
-- Retrieval recall:
-  - Increase top_k to 4–5; raise ctx_chars to 1600–2000.
-  - Add reranker (e.g., bge-reranker) over top-20 to select 4–5 best chunks.
-  - Revisit chunking (700–900 tokens, overlap 120–150).
-- Answer grounding:
-  - Tighten prompt: “Use only context; if unknown, say so; cite [n].”
-  - Temperature 0; optionally drop sentences without citations in postprocess.
-- Judge visibility:
-  - Optional --save-context flag to persist judge contexts/sources.
-  - Progress + partial writes (CSV flush, partial JSON).
-
-Repro/commands
-- Generate dataset:
-  - python -m src.eval.make_rag_qa
-- Evaluate (full):
-  - python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 120 --skip-if-no-key
-- Evaluate (fast sanity):
-  - python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 30 --top-k 4 --ctx-chars 1600 --skip-if-no-key
-
-## Milestone 5 — Minimal UI/API
-
-What’s done
-- Streamlit UI:
-  - Classifier top-1 auto-fills detected_plant/detected_disease.
-  - Query enrichment and filters passed to RAG.
-  - Default question fallback (“What can I do to treat this?”).
-  - Sources panel with titles/URLs; Windows Make target.
-- Docs:
-  - docs/STREAMLIT.md and README links.
-- Pipeline fixes:
-  - Retrieval hits normalized to dicts with meta (no tuple .get errors).
-  - Plant/disease filters applied in retrieval/prompt.
-
-Next steps (M5.x)
-- Retrieval: add reranker; expose fusion/alpha in UI.
-- Prompting: enforce citations and stricter grounding.
-- API: FastAPI /rag endpoint with env-configurable index/top_k.
-- Feedback: thumbs up/down logging to data/feedback.
