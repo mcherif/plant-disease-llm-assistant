@@ -419,6 +419,27 @@ class RAGPipeline:
             query=query, plant=plant, disease=disease, top_k=k, fusion=fusion, alpha=alpha
         )
 
+        # Deduplicate indices (keep first/best score occurrence)
+        dedup = []
+        seen = set()
+        for score, idx in hits:
+            if idx in seen:
+                continue
+            dedup.append((score, idx))
+            seen.add(idx)
+        hits = dedup
+
+        # Secondary de-dup: collapse multiple hits pointing to the same doc_id (defensive)
+        doc_seen = set()
+        uniq = []
+        for score, idx in hits:
+            doc_id = self.meta[idx].get("doc_id", f"idx-{idx}")
+            if doc_id in doc_seen:
+                continue
+            doc_seen.add(doc_id)
+            uniq.append((score, idx))
+        hits = uniq
+
         # Guardrail: if no context (or explicitly requested top_k=0), refuse without calling LLM
         if (k <= 0) or (not hits):
             refusal = (
