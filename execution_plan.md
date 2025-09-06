@@ -254,45 +254,41 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 
 ---
 
-# Execution Plan (M5+)
+## Immediate Focus — Skeleton E2E Freeze (before disease expansion)
 
-Status
-- M4: RAG eval end-to-end working. Faithfulness tuned later (“improvement lot”).
-- M5: Minimal UI + API. Streamlit UI shipped with auto plant/disease wiring.
+Objective
+Ship a minimal but runnable vertical slice (ingestion → retrieval → RAG → UI/API) that a new user can start in <10 min.
 
-Next steps
-1) Retrieval quality
-   - Support disease filters fully in retriever, increase top_k 3→5, ctx_chars 1200–1800.
-   - Optional reranker over top-20 (bge-reranker) to select best 4–5 chunks.
-2) Answer grounding
-   - Tighten answer prompt: “Use only context; if unknown, say so; cite [n].”
-   - Temperature 0; postprocess to drop sentences without [n].
-3) Judge visibility and speed
-   - Add progress, timeouts, and partial write in evaluate_rag (optional flag).
-4) API
-   - FastAPI /rag endpoint + dockerization; env configurable index path and top_k.
-5) Feedback loop
-   - Thumbs up/down in UI -> data/feedback/*.jsonl; cron job to sample hard cases.
-6) Docs
-   - Add screenshots to docs/STREAMLIT.md and API usage examples.
+Scope (DO NOW)
+- [ ] API: minimal FastAPI app (/health, /rag) reusing RAGPipeline
+- [ ] Docker: single Dockerfile + docker-compose exposing UI (8501) + API (8000)
+- [ ] Make targets: make api, make ui, make run (compose), make sample_index (tiny KB)
+- [ ] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
+- [ ] README Quick Start (clone → make sample_index → make ui → ask question)
+- [ ] Streamlit: link to API usage (curl example) + footer with version/hash
+- [ ] Basic telemetry: log answer latency & retrieved count to stdout
+- [ ] Execution plan cleanup (remove duplicate legacy section)
+- [ ] Add docs/ARCHITECTURE.md (diagram + 1‑page flow)
+- [ ] .env.example updated (OPENAI_API_KEY, INDEX_DIR, MODEL_NAME)
 
-Milestones
-- M5.1: Retrieval filters + rerank
-- M5.2: Prompt hardening + citations
-- M5.3: API + container
-- M5.4: Feedback logging + periodic eval
+Acceptance
+- Fresh clone + sample index: user gets an answer with sources (no manual edits)
+- All tests pass locally (pytest -q)
+- Ruff clean (ruff check .)
+- Docker image runs UI + API with sample index
 
-## Next Steps / Improvement Backlog
+Deferrals (NEXT AFTER FREEZE)
+- Disease/plant taxonomy expansion
+- Reranker & fusion tuning
+- Citation sentence post‑processing
+- Feedback logging
+- HF Space deployment
+- Full KB rebuild & eval reruns
 
-- Retrieval quality
-  - Optional MMR rerank before prompt; config knobs; unit test selection changes.
-- Developer UX (M3)
-  - Make target: make rag_local; sample queries and pretty sources output.
-- Generation evaluation (M4)
-  - LLM-as-judge for faithfulness/relevance on ~50–100 QA; artifacts and skip in CI by default.
-- Telemetry/observability (M4)
-  - Log latency, token counts, prompt/answer sizes; simple trace IDs; artifacts/logs/.
-- Optional backends (M3/M4)
-  - HF/local backend switch (backend=openai|hf) for offline runs.
-- UI follow-up (M3)
-  - Streamlit wiring to pipeline; audience selector (farmer/gardener); source links.
+## Backlog (after skeleton)
+- Disease expansion (taxonomy list, ingestion seeds, classifier alignment)
+- Retrieval reranker (bge-reranker over top 20 → top 5)
+- Prompt hardening & citation enforcement per sentence
+- Feedback loop (thumbs up/down JSONL)
+- HF Space + lightweight demo KB
+- Judge enhancements (--save-context, partial flush)
