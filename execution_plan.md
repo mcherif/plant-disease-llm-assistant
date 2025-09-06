@@ -160,6 +160,7 @@ What’s done
   - [x] Query enrichment and filters passed to RAG
   - [x] Default question fallback (“What can I do to treat this?”)
   - [x] Sources panel with titles/URLs; Windows Make target
+- [x] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
 - [x] Docs: docs/STREAMLIT.md and README links
 - [x] Pipeline fixes
   - [x] Retrieval hits normalized to dicts with meta (no tuple .get errors)
@@ -261,9 +262,8 @@ Ship a minimal but runnable vertical slice (ingestion → retrieval → RAG → 
 
 Scope (DO NOW)
 - [x] API: minimal FastAPI app (/health, /rag) reusing RAGPipeline
-- [ ] Docker: single Dockerfile + docker-compose exposing UI (8501) + API (8000)
-- [ ] Make targets: make api, make ui, make run (compose), make sample_index (tiny KB)
-- [ ] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
+- [x] Make targets: make api, make ui, make run (compose), make sample_index (tiny KB)
+- [x] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
 - [ ] README Quick Start (clone → make sample_index → make ui → ask question)
 - [ ] Streamlit: link to API usage (curl example) + footer with version/hash
 - [ ] Basic telemetry: log answer latency & retrieved count to stdout
