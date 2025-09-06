@@ -84,6 +84,7 @@ import faiss  # type: ignore
 import numpy as np
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
+import glob
 
 
 def _tok(s: str) -> List[str]:
@@ -146,8 +147,20 @@ class RAGPipeline:
         self.cfg = cfg
         self.index_dir = Path(cfg.index_dir)
 
+        # Locate FAISS index file (support multiple possible filenames)
+        primary = self.index_dir / "faiss.index"
+        if not primary.exists():
+            # fallback patterns
+            candidates = []
+            for pat in ("*.index", "*.faiss", "index.faiss"):
+                candidates.extend(self.index_dir.glob(pat))
+            if candidates:
+                primary = candidates[0]
+        if not primary.exists():
+            raise FileNotFoundError(f"FAISS index file not found in {self.index_dir}")
+        self.index = faiss.read_index(str(primary))
+
         # Load FAISS and metadata/config
-        self.index = faiss.read_index(str(self.index_dir / "faiss.index"))
         self.meta = self._load_meta(self.index_dir)
         self.config = self._load_config(self.index_dir)
 
