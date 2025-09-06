@@ -1,0 +1,15 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.tmp
+.dist/
+build/
+venv/
+.env
+.env.*
+mlruns/
+artifacts/
+data/kb/
+models/index/kb-faiss-bge/

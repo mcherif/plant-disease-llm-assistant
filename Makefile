@@ -2,7 +2,7 @@
 # Requires GNU Make (e.g., Chocolatey: choco install make -y).
 # Use TABs (not spaces) to indent recipe lines.
 
-.PHONY: install kb kb-all index eval_retrieval eval_rag rag_qa eval_rag_full ui api
+.PHONY: install kb kb-all index eval_retrieval eval_rag rag_qa eval_rag_full ui api sample_index run_sample_ui run_sample_api docker_build docker_up docker_down docker_logs docker_api_shell
 
 install:
 	pip install -r requirements.txt
@@ -41,3 +41,27 @@ ui:
 
 api:
 	set PYTHONPATH=.&& uvicorn src.interface.api:app --reload --host 127.0.0.1 --port 8000
+
+sample_index:
+	python -m src.ingestion.build_sample_kb
+
+run_sample_ui:
+	set INDEX_DIR=models/index/sample-faiss-bge&& set PYTHONPATH=.&& streamlit run src\interface\streamlit_app.py
+
+run_sample_api:
+	set INDEX_DIR=models/index/sample-faiss-bge&& set PYTHONPATH=.&& uvicorn src.interface.api:app --host 127.0.0.1 --port 8000
+
+docker_build:
+    docker build -t plant-disease-rag:latest .
+
+docker_up:
+    docker compose up --build -d
+
+docker_down:
+    docker compose down
+
+docker_logs:
+    docker compose logs -f
+
+docker_api_shell:
+    docker exec -it plant_rag_api bash

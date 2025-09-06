@@ -1,9 +1,39 @@
-version: '3.9'
+version: "3.9"
+
 services:
-  app:
+  api:
     build: .
-    command: streamlit run src/interface/streamlit_app.py
+    image: plant-disease-rag:latest
+    container_name: plant_rag_api
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INDEX_DIR: models/index/sample-faiss-bge
+      RETRIEVAL_DEVICE: cpu
+      TOP_K: ${TOP_K:-3}
     ports:
-      - '8501:8501'
-    volumes:
-      - .:/code
+      - "8000:8000"
+    command: >
+      uvicorn src.interface.api:app
+      --host 0.0.0.0
+      --port 8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  ui:
+    image: plant-disease-rag:latest
+    container_name: plant_rag_ui
+    depends_on:
+      - api
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INDEX_DIR: models/index/sample-faiss-bge
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    command: >
+      streamlit run src/interface/streamlit_app.py
+      --server.port 8501
+      --server.address 0.0.0.0

@@ -270,6 +270,7 @@ Scope (DO NOW)
 - [ ] Execution plan cleanup (remove duplicate legacy section)
 - [ ] Add docs/ARCHITECTURE.md (diagram + 1‑page flow)
 - [ ] .env.example updated (OPENAI_API_KEY, INDEX_DIR, MODEL_NAME)
+- [x] Docker: Dockerfile + docker-compose (api + ui) + Make targets (docker_build/up/down/logs)
 
 Acceptance
 - Fresh clone + sample index: user gets an answer with sources (no manual edits)
