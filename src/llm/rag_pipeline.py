@@ -84,7 +84,6 @@ import faiss  # type: ignore
 import numpy as np
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
-import glob
 
 
 def _tok(s: str) -> List[str]:

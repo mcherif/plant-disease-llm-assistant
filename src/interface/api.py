@@ -32,6 +32,8 @@ def get_pipeline() -> RAGPipeline:
         cfg = RetrievalConfig(index_dir=INDEX_DIR,
                               top_k=DEFAULT_TOP_K, device=RETRIEVAL_DEVICE)
         _rag_pipeline = RAGPipeline(cfg)
+        print(f"[api] Loaded pipeline index_dir={INDEX_DIR} "
+              f"docs={len(_rag_pipeline.meta)} device={RETRIEVAL_DEVICE}")
     return _rag_pipeline
 
 

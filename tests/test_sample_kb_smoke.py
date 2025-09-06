@@ -1,4 +1,5 @@
-import subprocess, sys
+import subprocess
+import sys
 from pathlib import Path
 import pytest
 from src.llm.rag_pipeline import RetrievalConfig, RAGPipeline
