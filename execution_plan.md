@@ -260,7 +260,7 @@ Objective
 Ship a minimal but runnable vertical slice (ingestion → retrieval → RAG → UI/API) that a new user can start in <10 min.
 
 Scope (DO NOW)
-- [ ] API: minimal FastAPI app (/health, /rag) reusing RAGPipeline
+- [x] API: minimal FastAPI app (/health, /rag) reusing RAGPipeline
 - [ ] Docker: single Dockerfile + docker-compose exposing UI (8501) + API (8000)
 - [ ] Make targets: make api, make ui, make run (compose), make sample_index (tiny KB)
 - [ ] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
@@ -292,3 +292,12 @@ Deferrals (NEXT AFTER FREEZE)
 - Feedback loop (thumbs up/down JSONL)
 - HF Space + lightweight demo KB
 - Judge enhancements (--save-context, partial flush)
+
+---
+
+## Technical Debt (tracked items)
+- [ ] Mojibake / garbled title normalization:
+      Replace naive replaces in _clean_title with ingestion‑time UTF-8 verification
+      (consider ftfy or strict decode + logging). Add test with a sample malformed title.
+- [ ] Centralize text normalization utilities (titles, plant/disease aliases) in a single module.
+- [ ] Move citation enforcement + prompt building into dedicated component to simplify RAGPipeline.
