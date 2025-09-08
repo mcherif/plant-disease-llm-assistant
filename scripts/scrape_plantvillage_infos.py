@@ -52,7 +52,7 @@ BASE_URL = "https://plantvillage.psu.edu/topics/{}/infos"
 
 # Headers/session for scraping
 HEADERS = {
-    "User-Agent": "plant-disease-llm-assistant/1.0 (+https://github.com/DataTalksClub/plant-disease-llm-assistant)",
+    "User-Agent": "plant-disease-rag-assistant/1.0 (+https://github.com/DataTalksClub/plant-disease-rag-assistant)",
     "Accept-Language": "en-US,en;q=0.8",
 }
 # Known PV URLs for tricky names/typos
@@ -87,7 +87,9 @@ CROP_SLUGS = {
     "Tomato": "tomato",
 }
 
-USER_AGENT = "plant-disease-llm-assistant/0.1 (+https://github.com/mcherif/plant-disease-llm-assistant)"
+USER_AGENT = "plant-disease-rag-assistant/0.1 (+https://github.com/mcherif/plant-disease-rag-assistant)"
+
+# Logo reference updated to plant-disease-rag-assistant-logo.png.
 
 # --- Add these helpers (alias table + slug + URL fixer) ---
 PV_TOPIC_ALIASES = {

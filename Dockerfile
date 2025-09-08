@@ -11,8 +11,22 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl && rm -rf /var/lib/apt/lists/*
 
-# Copy project (relies on .dockerignore to trim context)
+# Copy only requirements first
+COPY requirements.txt ./
+
+# Copy wheels first to avoid repeated downloads
+COPY wheels ./wheels
+
+# Uses local wheels for faster builds and avoids repeated downloads of large packages.
+# Install from local wheels first, then fallback to PyPI
+RUN pip install --upgrade pip
+RUN pip install --no-index --find-links=./wheels -r requirements.txt
+
+# Now copy the rest of the project. This way, the pip install layer is only rebuilt if requirements.txt changes, not if any other file changes.
 COPY . .
+
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
 RUN mkdir -p /root/.cache/pip
 ENV PIP_CACHE_DIR=/root/.cache/pip

@@ -5,7 +5,7 @@ This Gradio app is deprecated and replaced by the Streamlit UI in src/interface/
 All new UI features and maintenance should be done in the Streamlit app.
 """
 """
-Plant Disease LLM Assistant - Gradio app.
+Plant Disease RAG Assistant - Gradio app.
 
 Summary:
 - Provides a web UI (Gradio Blocks) to classify plant diseases from an uploaded image.
@@ -23,7 +23,7 @@ Requirements:
   models/vit-finetuned/
     - model weights/config (e.g., pytorch_model.bin, config.json, preprocessor_config.json)
     - class_mapping.json mapping class_name -> index
-  images/plant-disease-llm-assistant-logo.png (optional)
+  images/plant-disease-rag-assistant-logo.png (optional)
   README.md (optional)
 
 Notes:
@@ -50,14 +50,14 @@ def dbg(msg: str):
 MODEL_DIR = "models/vit-finetuned"
 
 # Build a safe path to the logo and expose it via Gradio's file= URL
-LOGO_REL = "images/plant-disease-llm-assistant-logo.png"
+LOGO_REL = "images/plant-disease-rag-assistant-logo.png"
 LOGO_ABS = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", LOGO_REL))
 
 # Path to README for embedding
 README_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", "README.md"))
-SPACE_URL = "https://huggingface.co/spaces/mcherif/Plant-Disease-LLM-Assistant"
+SPACE_URL = "https://huggingface.co/spaces/mcherif/Plant-Disease-RAG-Assistant"
 
 
 def logo_block():

@@ -1,4 +1,4 @@
-# Execution Plan — Plant-Disease-LLM Assistant
+# Execution Plan — Plant-Disease-RAG Assistant
 
 Legend: `- [ ]` = TODO · `- [x]` = DONE · `- [~]` = IN PROGRESS
 
@@ -297,11 +297,9 @@ Deferrals (NEXT AFTER FREEZE)
 ---
 
 ## Technical Debt (tracked items)
-- [ ] Mojibake / garbled title normalization:
-      Replace naive replaces in _clean_title with ingestion‑time UTF-8 verification
-      (consider ftfy or strict decode + logging). Add test with a sample malformed title.
-- [ ] Centralize text normalization utilities (titles, plant/disease aliases) in a single module.
-- [ ] Move citation enforcement + prompt building into dedicated component to simplify RAGPipeline.
+- [x] Logo and branding: Standardize logo filename to `plant-disease-rag-assistant-logo.png` and update all references. Remove obsolete logo.
+- [x] Remove Gradio app from active development; mark as obsolete in code comments.
+- [x] Dockerfile: Use local wheels for faster builds and avoid repeated downloads of large packages (e.g., torch).
 - [ ] KB coverage gaps: Some diseases (e.g., maize treatments) lack management/treatment info in the KB. Update KB sources and index to ensure all tracked diseases have actionable context.
 - [ ] .dockerignore excludes KB/index files by default; review ignore rules to avoid missing files in Docker builds.
 - [ ] Ensure all environment variables (e.g., INDEX_DIR) are consistent across local/dev/prod and documented in .env.example.
