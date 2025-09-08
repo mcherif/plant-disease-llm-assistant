@@ -222,7 +222,7 @@ mlruns/
 # Sample KB build artifacts
 data/sample_kb/*
 !data/sample_kb/README.md
-models/index/sample-faiss-bge/*
+models/index/*
 
 # OS/IDE
 .DS_Store

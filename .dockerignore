@@ -12,4 +12,3 @@ venv/
 mlruns/
 artifacts/
 data/kb/
-models/index/kb-faiss-bge/

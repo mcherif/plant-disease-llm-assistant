@@ -4,8 +4,9 @@ services:
     image: plant-disease-rag:latest
     container_name: plant_rag_api
     environment:
+      PYTHONPATH: /app
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INDEX_DIR: models/index/sample-faiss-bge
+      INDEX_DIR: models/index/kb-faiss-bge
       RETRIEVAL_DEVICE: cpu
       TOP_K: 3
     ports:
@@ -23,8 +24,9 @@ services:
     depends_on:
       - api
     environment:
+      PYTHONPATH: /app
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INDEX_DIR: models/index/sample-faiss-bge
+      INDEX_DIR: models/index/kb-faiss-bge
       API_URL: http://api:8000
     ports:
       - "8501:8501"

@@ -4,7 +4,8 @@ FROM python:3.10-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
@@ -19,10 +20,10 @@ RUN bash -c 'if [ -f pyproject.toml ]; then pip install --upgrade pip && pip ins
     else echo "WARNING: no pyproject.toml or requirements.txt found"; fi'
 
 # Build tiny sample index (idempotent)
-RUN python -m src.ingestion.build_sample_kb
+RUN python -m src.ingestion.build_kb
 
-ENV INDEX_DIR=models/index/sample-faiss-bge \
-    RETRIEVAL_DEVICE=cpu \
+ENV INDEX_DIR=models/index/kb-faiss-bge \
+    RETRIEVAL_DEVICE=gpu \
     PORT_API=8000 \
     PORT_UI=8501
 
