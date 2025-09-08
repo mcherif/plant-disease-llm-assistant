@@ -1,4 +1,10 @@
 """
+OBSOLETE: Use streamlit_app.py instead.
+
+This Gradio app is deprecated and replaced by the Streamlit UI in src/interface/streamlit_app.py.
+All new UI features and maintenance should be done in the Streamlit app.
+"""
+"""
 Plant Disease LLM Assistant - Gradio app.
 
 Summary:

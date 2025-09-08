@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 # Copy project (relies on .dockerignore to trim context)
 COPY . .
 
+RUN mkdir -p /root/.cache/pip
+ENV PIP_CACHE_DIR=/root/.cache/pip
+
 # Install deps (pyproject preferred, else requirements.txt)
 RUN bash -c 'if [ -f pyproject.toml ]; then pip install --upgrade pip && pip install .; \
     elif [ -f requirements.txt ]; then pip install -r requirements.txt; \

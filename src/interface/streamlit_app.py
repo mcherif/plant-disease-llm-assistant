@@ -1,3 +1,22 @@
+"""
+Plant Disease RAG Assistant — Streamlit UI
+
+This is the main interactive frontend for the plant disease LLM assistant.
+Features:
+- Upload plant images for disease classification (ViT finetuned model)
+- Ask questions about plant diseases and management using RAG (retrieval-augmented generation)
+- Uses OpenAI LLM backend and PlantVillage + Wikipedia knowledge base
+- Sidebar settings: index directory, top-k context, device, detected labels
+- Displays sources and context for answers
+- Replaces the previous Gradio app (see app_gradio.py, now obsolete)
+
+Usage:
+- Run via Streamlit: `streamlit run src/interface/streamlit_app.py`
+- Configure index and API key via sidebar or environment variables
+
+Author: Mohamed Cherif / innerloopinc@gmail.com
+"""
+
 import os
 import json
 import torch
@@ -10,8 +29,10 @@ import re
 DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 
 MODEL_DIR = "models/vit-finetuned"
+LOGO_PATH = "images/plant-disease-llm-assistant-logo.png"
 
 st.set_page_config(page_title="Plant Disease Assistant", layout="wide")
+st.sidebar.image(LOGO_PATH, use_column_width=True)
 st.title("Plant Disease RAG Assistant")
 
 # ---- helpers (must be defined before use) ----
