@@ -48,9 +48,9 @@ class RagRequest(BaseModel):
         None, description="Fusion strategy (none|sum|rrf)")
     alpha: Optional[float] = Field(
         None, ge=0, le=1, description="Alpha for weighted sum fusion")
-    temperature: float = Field(0.0, ge=0, le=1, description="LLM temperature")
+    temperature: float = Field(0.0, ge=0, le=1, description="RAG temperature")
     timeout: Optional[float] = Field(
-        None, ge=1, le=120, description="LLM call timeout seconds")
+        None, ge=1, le=120, description="RAG call timeout seconds")
 
 
 class Source(BaseModel):

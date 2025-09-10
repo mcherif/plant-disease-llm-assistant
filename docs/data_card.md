@@ -34,6 +34,32 @@ Politeness: custom User-Agent, Action API usage, retry/backoff, robots.txt check
 ## Data Fields (manifest)
 doc_id, url, title, plant, disease, section, lang, split_idx, text, n_tokens, crawl_date
 
+## Structured KB Schema
+
+Each knowledge base entry (row/chunk) should include the following required fields:
+
+- **doc_id**: Unique identifier for the document or chunk (UUID)
+- **plant**: Crop name (e.g., "Maize", "Peach", "Tomato")
+- **disease**: Disease name (e.g., "Common Rust", "Powdery Mildew")
+- **title**: Title or summary of the entry
+- **section**: Section/category (e.g., "Symptoms", "Management", "Prevention"); indicates the category or part of the document the chunk represents; can be null if not split
+- **symptoms**: Description of disease symptoms (text)
+- **cause**: Description of the cause (pathogen, environmental, etc.)
+- **management**: Actionable advice for managing/treating the disease (text)
+- **prevention**: Preventive measures (text)
+- **references**: List of source URLs or citations
+- **lang**: Language code (e.g., "en")
+- **text**: Full text (may combine above fields if not split); this is a convenience field for retrieval
+- **n_tokens**: Number of tokens in the chunk; helps manage chunk size for efficient retrieval and LLM usage
+- **split_idx**: Indicates the position of the chunk in the original document when splitting for KB ingestion
+- **crawl_date**: Date the entry was collected
+
+**Notes:**
+- All entries must have non-empty `symptoms`, `cause`, and `management` fields.
+- `prevention` and `references` are recommended but may be empty if not available.
+- Use this schema for all future scraping, ingestion, and validation.
+
+
 ## Quality and Validation
 - URL validation: src/ingestion/validate_kb_urls.py
 - Spot-check recommended: 10 random chunks for clean text and correct tags

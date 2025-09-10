@@ -52,7 +52,7 @@ OUTPUT_KB_DIR = "data/kb"
 CLASSES_FILE = os.path.join(OUTPUT_KB_DIR, "classes_cleaned.txt")
 FAILED_FILE = os.path.join(OUTPUT_KB_DIR, "failed.txt")
 WIKIPEDIA_LANG = "en"
-USER_AGENT = "plant-disease-kb-fetcher/1.0 (+https://github.com/mcherif/plant-disease-llm-assistant)"
+USER_AGENT = "plant-disease-kb-fetcher/1.0 (+https://github.com/mcherif/plant-disease-rag-assistant)"
 
 wikipedia.set_lang(WIKIPEDIA_LANG)
 HEADERS = {"User-Agent": USER_AGENT}

@@ -10,6 +10,7 @@ Unified KB builder for PlantVillage (+ Wikipedia soon).
 Usage:
   python -m src.ingestion.build_kb --sources plantvillage --out data\\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
 """
+from src.ingestion.kb_validator import validate_kb
 import argparse
 import datetime as dt
 import json
@@ -21,10 +22,11 @@ import urllib.robotparser
 import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
+from bs4 import BeautifulSoup
 
 WIKI_BASE = "https://{lang}.wikipedia.org"
 WIKI_SUMMARY = "/api/rest_v1/page/summary/{title}"
-USER_AGENT = "PlantDiseaseKB/0.1 (+https://github.com/mcherif/plant-disease-llm-assistant; https://huggingface.co/spaces/mcherif/Plant-Disease-LLM-Assistant)"
+USER_AGENT = "PlantDiseaseKB/0.1 (+https://github.com/mcherif/plant-disease-rag-assistant; https://huggingface.co/spaces/mcherif/Plant-Disease-RAG-Assistant)"
 
 # Canonicalization for common spelling/casing mismatches from PV → Wikipedia
 WIKI_NORMALIZE: Dict[str, str] = {
@@ -253,7 +255,8 @@ def _wiki_is_relevant(title: str, extract: str, plant: str, disease: str) -> boo
         return True
 
     # For generic disease terms, require plant mention
-    generic_terms = ["blight", "mildew", "rust", "leaf spot", "leaf mold", "mite", "virus"]
+    generic_terms = ["blight", "mildew", "rust",
+                     "leaf spot", "leaf mold", "mite", "virus"]
     if any(g in dz for g in generic_terms):
         return bool(pl) and (pl in t or pl in ex)
 
@@ -697,7 +700,7 @@ def deduplicate_chunks(
 
 def load_docs_from_plantvillage(
     kb_path: Union[str, Path], verbose: bool = False
-) -> List[Doc]:
+) -> List[Doc]:  # <-- FIXED
     """Load docs from PlantVillage KB JSON and synthesize markdown sections."""
     kb_path = Path(kb_path)
     if not kb_path.exists():
@@ -711,6 +714,7 @@ def load_docs_from_plantvillage(
     crawl_date = now_date()
     for plant, diseases in kb.items():
         for disease, entry in diseases.items():
+            entry.pop("html", None)
             if disease.lower() == "healthy":
                 continue
             desc = (entry or {}).get("description") or ""
@@ -733,6 +737,16 @@ def load_docs_from_plantvillage(
             full_text = normalize_to_markdown("\n\n".join(parts).strip())
             if not full_text:
                 continue
+            html = entry.get("html")
+            management = ""
+            if html:
+                disease_sections = extract_disease_sections(html)
+                # Try to match the current disease name (case-insensitive, partial match)
+                for section in disease_sections:
+                    if disease.lower() in section.get("disease", "").lower():
+                        management = section.get("management", "")
+                        break
+
             doc: Doc = {
                 "doc_id": str(uuid.uuid4()),
                 "url": url,
@@ -743,11 +757,100 @@ def load_docs_from_plantvillage(
                 "lang": "en",  # TODO: optional lang detection
                 "crawl_date": crawl_date,
                 "text": full_text,
+                "management": management,
             }
             docs.append(doc)
     if verbose:
         print(f"[pv] loaded {len(docs)} docs from {kb_path}")
     return docs
+
+# --- Add/Update: Structured field extraction from raw text chunks ---
+
+
+def extract_structured_fields(text: str) -> dict:
+    """
+    Extracts symptoms, cause, management, and prevention sections from a markdown or plain text chunk.
+    Returns a dict with keys: symptoms, cause, management, prevention.
+    """
+    # Simple regex-based extraction for markdown headings (e.g., ## Symptoms)
+    sections = {
+        "symptoms": "",
+        "cause": "",
+        "management": "",
+        "prevention": ""
+    }
+    current = None
+    for line in text.splitlines():
+        line = line.strip()
+        if re.match(r"^(#+\s*)?symptoms[:]?$", line, re.IGNORECASE):
+            current = "symptoms"
+            continue
+        elif re.match(r"^(#+\s*)?cause[:]?$", line, re.IGNORECASE):
+            current = "cause"
+            continue
+        elif re.match(r"^(#+\s*)?(management|treatment|control)[:]?$", line, re.IGNORECASE):
+            current = "management"
+            continue
+        elif re.match(r"^(#+\s*)?prevention[:]?$", line, re.IGNORECASE):
+            current = "prevention"
+            continue
+        elif re.match(r"^#+\s*\w+", line):  # Any other heading resets
+            current = None
+            continue
+        if current:
+            sections[current] += (line + " ")
+    # Clean up whitespace
+    for k in sections:
+        sections[k] = sections[k].strip()
+    return sections
+
+
+def extract_structured_fields_html(html: str) -> dict:
+    soup = BeautifulSoup(html, "html.parser")
+    sections = {
+        "symptoms": "",
+        "cause": "",
+        "management": "",
+        "prevention": ""
+    }
+    # Example: find divs by class
+    for key in sections:
+        div = soup.find("div", class_=key)
+        if div:
+            sections[key] = div.get_text(separator=" ", strip=True)
+    return sections
+
+# Example usage in your KB build loop:
+# for chunk in chunks:
+#     fields = extract_structured_fields(chunk["text"])
+#     chunk["symptoms"] = fields["symptoms"]
+#     chunk["cause"] = fields["cause"]
+#     chunk["management"] = fields["management"]
+#     chunk["prevention"] = fields["prevention"]
+#     # ...existing code to save chunk...
+
+# This will populate the structured fields for every KB entry if the text contains recognizable sections.
+
+
+def save_kb_and_validate(kb, out_path):
+    import json
+    # Save KB
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(kb, f, ensure_ascii=False, indent=2)
+    # Validate KB
+    report = validate_kb(kb)
+    if report:
+        print(
+            f"KB validation found {len(report)} incomplete/problematic entries. See validation_report.json for details.")
+        with open("validation_report.json", "w", encoding="utf-8") as vf:
+            json.dump(report, vf, ensure_ascii=False, indent=2)
+    else:
+        print("KB validation passed: all entries complete.")
+
+# Replace your final KB save step with:
+# save_kb_and_validate(kb, out_path)
+
+# This will run validation after building the KB and output a report for review or targeted scraping.
 
 
 def build_kb(
@@ -815,8 +918,26 @@ def build_kb(
         rows, method=dedup_method, threshold=dedup_threshold, verbose=verbose
     )
 
+    # Prepare KB for validation (add structured fields to each row)
+    for row in rows:
+        fields = extract_structured_fields(row["text"])
+        row["symptoms"] = fields["symptoms"]
+        row["cause"] = fields["cause"]
+        row["management"] = fields["management"]
+        row["prevention"] = fields["prevention"]
+        # Optionally, add references if available
+
+    # After building your KB rows (before saving):
+    for row in rows:
+        if "html" in row:
+            del row["html"]
+
     # Manifest
     manifest_path = write_manifest(rows, out_dir, verbose=verbose)
+
+    # Save and validate KB (after manifest_path is assigned)
+    save_kb_and_validate(rows, str(manifest_path))
+
     return manifest_path
 
 
@@ -848,3 +969,96 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+def extract_disease_sections(html: str) -> list:
+    """
+    Extracts all disease sections and their management from PlantVillage HTML.
+    Returns a list of dicts: {disease, symptoms, cause, management, prevention}
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+    current = {}
+    for tag in soup.find_all(['h4', 'div']):
+        if tag.name == 'h4':
+            # Save previous disease section if exists
+            if current:
+                results.append(current)
+            # Start new disease section
+            disease_name = tag.get_text(separator=" ", strip=True)
+            current = {"disease": disease_name}
+        elif tag.name == 'div' and tag.get('class'):
+            cls = tag.get('class')[0]
+            current[cls] = tag.get_text(separator=" ", strip=True)
+    # Save last section
+    if current:
+        results.append(current)
+    return results
+
+# Example usage:
+# disease_sections = extract_disease_sections(html)
+# for section in disease_sections:
+#     if "Powdery mildew" in section["disease"]:
+#         print("Management:", section.get("management", ""))
+
+
+def extract_disease_info(html):
+    soup = BeautifulSoup(html, "html.parser")
+    diseases = []
+    # Find all disease blocks
+    for disease_div in soup.find_all("div", id=lambda x: x and x.startswith("disease-")):
+        disease = {}
+        # Title
+        h4 = disease_div.find_next("h4")
+        if h4:
+            disease["title"] = h4.get_text(strip=True)
+            # Scientific name (italic)
+            sci = h4.find("i")
+            if sci:
+                disease["scientific_name"] = sci.get_text(strip=True)
+        # Symptoms
+        symptoms = disease_div.find_next("div", class_="symptoms")
+        if symptoms:
+            disease["symptoms"] = symptoms.get_text(strip=True)
+        # Cause
+        cause = disease_div.find_next("div", class_="cause")
+        if cause:
+            disease["cause"] = cause.get_text(strip=True)
+        # Comments
+        comments = disease_div.find_next("div", class_="comments")
+        if comments:
+            disease["comments"] = comments.get_text(strip=True)
+        # Management
+        management = disease_div.find_next("div", class_="management")
+        if management:
+            disease["management"] = management.get_text(strip=True)
+        # Images (optional)
+        images = []
+        for img in disease_div.find_all("img"):
+            images.append({
+                "url": img.get("src"),
+                "caption": img.find_next("div", class_="image_caption").get_text(strip=True) if img.find_next("div", class_="image_caption") else ""
+            })
+        if images:
+            disease["images"] = images
+        diseases.append(disease)
+    return diseases
+
+
+# Example usage
+with open("data/disease_and_pests.html", encoding="utf-8") as f:
+    html = f.read()
+diseases = extract_disease_info(html)
+with open("data/apple_diseases.json", "w", encoding="utf-8") as f:
+    json.dump(diseases, f, indent=2, ensure_ascii=False)
+
+
+# Example: extract text after <h4>Management</h4>
+def extract_management_text(disease_div):
+    h4 = disease_div.find(lambda tag: tag.name == "h4" and "management" in tag.text.lower())
+    if h4:
+        # Get the next sibling paragraph
+        p = h4.find_next_sibling("p")
+        if p:
+            return p.get_text(strip=True)
+    return ""

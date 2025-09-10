@@ -1,8 +1,20 @@
 """
 Plant Disease RAG Assistant — Streamlit UI
 
-Logo updated to plant-disease-rag-assistant-logo.png.
-Gradio app is now obsolete; all UI features are maintained here.
+This is the main interactive frontend for the plant disease RAG assistant.
+Features:
+- Upload plant images for disease classification (ViT finetuned model)
+- Ask questions about plant diseases and management using RAG (retrieval-augmented generation)
+- Uses OpenAI LLM backend and PlantVillage + Wikipedia knowledge base
+- Sidebar settings: index directory, top-k context, device, detected labels
+- Displays sources and context for answers
+- Replaces the previous Gradio app (see app_gradio.py, now obsolete)
+
+Usage:
+- Run via Streamlit: `streamlit run src/interface/streamlit_app.py`
+- Configure index and API key via sidebar or environment variables
+
+Author: Mohamed Cherif / innerloopinc@gmail.com
 """
 
 import os

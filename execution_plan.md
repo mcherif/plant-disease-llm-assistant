@@ -4,6 +4,39 @@ Legend: `- [ ]` = TODO · `- [x]` = DONE · `- [~]` = IN PROGRESS
 
 ---
 
+## Immediate Focus — Skeleton E2E Freeze (before disease expansion)
+
+**Objective:**  
+Ship a minimal but runnable vertical slice (ingestion → retrieval → RAG → UI/API) that a new user can start in <10 min.
+
+**Scope (DO NOW):**
+- [x] API: minimal FastAPI app (/health, /rag) reusing RAGPipeline
+- [x] Make targets: make api, make ui, make run (compose), make sample_index (tiny KB)
+- [x] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
+- [ ] README Quick Start (clone → make sample_index → make ui → ask question)
+- [ ] Streamlit: link to API usage (curl example) + footer with version/hash
+- [ ] Basic telemetry: log answer latency & retrieved count to stdout
+- [ ] Execution plan cleanup (remove duplicate legacy section)
+- [ ] Add docs/ARCHITECTURE.md (diagram + 1‑page flow)
+- [ ] .env.example updated (OPENAI_API_KEY, INDEX_DIR, MODEL_NAME)
+- [x] Docker: Dockerfile + docker-compose (api + ui) + Make targets (docker_build/up/down/logs)
+
+**Acceptance:**
+- Fresh clone + sample index: user gets an answer with sources (no manual edits)
+- All tests pass locally (pytest -q)
+- Ruff clean (ruff check .)
+- Docker image runs UI + API with sample index
+
+**Deferrals (NEXT AFTER FREEZE):**
+- Disease/plant taxonomy expansion (deferred until after cloud app is working)
+- Reranker & fusion tuning
+- Citation sentence post‑processing
+- Feedback logging
+- HF Space deployment
+- Full KB rebuild & eval reruns
+
+---
+
 ## Milestone 0 — Foundation & Scaffolding — Done
 Goal: Set the repo so everything is reproducible and testable.
 
@@ -115,46 +148,36 @@ Goal: Grounded answers with citations.
 
 ---
 
-## Milestone 4 — RAG evaluation
+## Milestone 4 — RAG Evaluation & Cloud Deployment
 
 Goals
 - Generate a focused QA dataset from the KB manifest.
 - Run RAG end-to-end and score answers with LLM-as-judge (faithfulness, relevance).
+- Deploy a minimal working app to Hugging Face Spaces or similar cloud platform.
 - Produce JSON/CSV artifacts for inspection.
 
-What’s done
+What’s done / Next steps
 - [x] Dataset created: data/eval/rag_qa.jsonl (120 prompts; from data/kb/manifest.parquet)
 - [x] Evaluation run
   - [x] Command: python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 120 --skip-if-no-key
   - [x] Judge model: Default gpt-4o-mini (override via OPENAI_MODEL)
   - [x] Artifacts: artifacts/rag_eval/rag_eval.json and artifacts/rag_eval/rag_eval.csv
 - [x] Ergonomics: Judge max_tokens capped; optional progress/timeouts
-
-Observations
-- Some answers show low faithfulness (claims not fully supported by retrieved context).
-- Off-topic drift when plant/disease aren’t enforced in retrieval/prompting.
+- [ ] Deploy minimal app to Hugging Face Space (Streamlit or FastAPI)
+- [ ] Update README and docs for cloud deployment
 
 Queued improvements (tracked for M5.x)
 - [ ] Retrieval recall: increase top_k to 4–5; raise ctx_chars to 1600–2000
 - [ ] Add reranker (e.g., bge-reranker) over top-20 to select 4–5 best chunks
-- [ ] Revisit chunking (700–900 tokens, overlap 120–150)
 - [ ] Tighten prompt: “Use only context; if unknown, say so; cite [n]”
 - [ ] Temperature 0; optionally drop sentences without citations in postprocess
 - [ ] Judge visibility: --save-context flag and partial writes (CSV flush, partial JSON)
-
-Repro/commands
-- Generate dataset:
-  - python -m src.eval.make_rag_qa
-- Evaluate (full):
-  - python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 120 --skip-if-no-key
-- Evaluate (fast sanity):
-  - python -m src.eval.evaluate_rag --dataset data\eval\rag_qa.jsonl --out artifacts\rag_eval --n 30 --top-k 4 --ctx-chars 1600 --skip-if-no-key
 
 ---
 
 ## Milestone 5 — Minimal UI/API
 
-What’s done
+What’s done / Next steps
 - [x] Streamlit UI
   - [x] Classifier top-1 auto-fills detected_plant/detected_disease
   - [x] Query enrichment and filters passed to RAG
@@ -255,47 +278,6 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 
 ---
 
-## Immediate Focus — Skeleton E2E Freeze (before disease expansion)
-
-Objective
-Ship a minimal but runnable vertical slice (ingestion → retrieval → RAG → UI/API) that a new user can start in <10 min.
-
-Scope (DO NOW)
-- [x] API: minimal FastAPI app (/health, /rag) reusing RAGPipeline
-- [x] Make targets: make api, make ui, make run (compose), make sample_index (tiny KB)
-- [x] Tiny sample KB (2 plants, 3 diseases) under data/sample_kb/ + index build
-- [ ] README Quick Start (clone → make sample_index → make ui → ask question)
-- [ ] Streamlit: link to API usage (curl example) + footer with version/hash
-- [ ] Basic telemetry: log answer latency & retrieved count to stdout
-- [ ] Execution plan cleanup (remove duplicate legacy section)
-- [ ] Add docs/ARCHITECTURE.md (diagram + 1‑page flow)
-- [ ] .env.example updated (OPENAI_API_KEY, INDEX_DIR, MODEL_NAME)
-- [x] Docker: Dockerfile + docker-compose (api + ui) + Make targets (docker_build/up/down/logs)
-
-Acceptance
-- Fresh clone + sample index: user gets an answer with sources (no manual edits)
-- All tests pass locally (pytest -q)
-- Ruff clean (ruff check .)
-- Docker image runs UI + API with sample index
-
-Deferrals (NEXT AFTER FREEZE)
-- Disease/plant taxonomy expansion
-- Reranker & fusion tuning
-- Citation sentence post‑processing
-- Feedback logging
-- HF Space deployment
-- Full KB rebuild & eval reruns
-
-## Backlog (after skeleton)
-- Disease expansion (taxonomy list, ingestion seeds, classifier alignment)
-- Retrieval reranker (bge-reranker over top 20 → top 5)
-- Prompt hardening & citation enforcement per sentence
-- Feedback loop (thumbs up/down JSONL)
-- HF Space + lightweight demo KB
-- Judge enhancements (--save-context, partial flush)
-
----
-
 ## Technical Debt (tracked items)
 - [x] Logo and branding: Standardize logo filename to `plant-disease-rag-assistant-logo.png` and update all references. Remove obsolete logo.
 - [x] Remove Gradio app from active development; mark as obsolete in code comments.
@@ -305,3 +287,55 @@ Deferrals (NEXT AFTER FREEZE)
 - [ ] Ensure all environment variables (e.g., INDEX_DIR) are consistent across local/dev/prod and documented in .env.example.
 - [ ] Add automated checks for KB completeness (e.g., missing treatment sections).
 - [ ] Improve error handling for missing context in RAG pipeline.
+
+---
+
+## Milestone: KB Expansion & Multi-source Integration
+
+**Goal:**  
+Build a comprehensive, actionable plant disease knowledge base by integrating multiple trusted sources and ensuring every (crop, disease) entry includes symptoms, cause, management, prevention, and references.
+
+---
+
+### Tasks & Progress Tracking
+
+#### 1. Multi-source Scraping & Integration
+- [x] PlantVillage: Continue scraping for symptoms, cause, and management. Identify gaps for less common crops/diseases.
+- [ ] Wikipedia: Scrape disease pages for additional context, especially management/treatment sections.
+- [ ] University Extension Services: Ingest management recommendations from Penn State, UC Davis, Cornell, Purdue, etc.
+- [ ] FAO & Government Agriculture Portals: Integrate best practices for disease management.
+- [ ] Peer-reviewed Literature: Semi-automate ingestion of abstracts from PubMed/AGRICOLA for up-to-date treatment strategies.
+
+#### 2. Structured KB Design
+- [x] Define schema: Each (crop, disease) entry must include `symptoms`, `cause`, `management`, `prevention`, `references`.
+- [x] Support JSON/Parquet formats for KB storage.
+
+#### 3. Automated Completeness Checks
+- [ ] Write scripts to flag missing/weak entries (e.g., empty or short management fields).
+- [ ] Prioritize manual review or targeted scraping for flagged gaps.
+
+#### 4. Human-in-the-loop Curation
+- [ ] Expert/crowdsourced review for critical crops/diseases.
+- [ ] Add citations and ensure advice is regionally relevant.
+
+#### 5. Continuous Updates
+- [ ] Set up periodic scraping/ingestion jobs to keep KB fresh.
+- [ ] Track new outbreaks or emerging diseases.
+
+---
+
+**Summary Plan**
+- Start with PlantVillage, but supplement with Wikipedia, university extensions, FAO, and scientific literature.
+- Require actionable management info for every KB entry.
+- Automate gap detection and prioritize filling those gaps.
+- Cite sources and keep the KB updated.
+
+---
+
+**Progress:**  
+- [x] PlantVillage scraping and schema defined  
+- [ ] Wikipedia, university, FAO, literature integration  
+- [ ] Completeness checks and human review  
+- [ ] Continuous update pipeline
+
+*Track progress by updating checkboxes as tasks are completed.*

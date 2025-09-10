@@ -21,7 +21,7 @@ Relation to production ingestion
 - This script remains useful for quick end-to-end scrapes or initial KB seeding.
 
 Usage
-  python -m src.ingestion.scrape_plantvillage_infos --dataset_dir data\PlantVillage-Dataset\raw\color --out data\plantvillage_kb.json
+  python -m src.ingestion.scrape_plantvillage_infos --dataset_dir ..\PlantVillage-Dataset\raw\color --out data\plantvillage_kb.json
 """
 
 import os
@@ -223,13 +223,19 @@ def get_crop_diseases(crop_slug):
                     if r2.status_code == 200:
                         soup2 = BeautifulSoup(r2.text, "html.parser")
                         lead = _extract_lead_text(soup2)
+                        management = extract_management_section(
+                            soup2)  # <-- ADD THIS
                         if lead:
                             desc = lead
-                            # be nice to the server
-                            time.sleep(0.3)
+                        # be nice to the server
+                        time.sleep(0.3)
 
                 if title:
-                    diseases[title] = {"desc": desc, "url": detail_url}
+                    diseases[title] = {
+                        "desc": desc,
+                        "url": detail_url,
+                        "management": management if management else ""
+                    }
     except requests.RequestException:
         pass
 
@@ -324,8 +330,9 @@ def try_plantvillage_direct(crop_slug: str, disease_name: str) -> tuple[str | No
             if r.status_code == 200:
                 soup = BeautifulSoup(r.text, "html.parser")
                 lead = _extract_lead_text(soup)
+                management = extract_management_section(soup)  # <-- ADD THIS
                 if lead:
-                    return lead, url
+                    return lead, url, management
         except requests.RequestException:
             pass
 
@@ -351,11 +358,27 @@ def try_plantvillage_direct(crop_slug: str, disease_name: str) -> tuple[str | No
             if r.status_code == 200:
                 soup = BeautifulSoup(r.text, "html.parser")
                 lead = _extract_lead_text(soup)
+                management = extract_management_section(soup)  # <-- ADD THIS
                 if lead:
-                    return lead, url
+                    return lead, url, management
         except requests.RequestException:
             continue
     return None, None
+
+
+def extract_management_section(soup):
+    # Find all headings that mention 'management'
+    for h in soup.find_all(['h3', 'h4', 'h5']):
+        if 'management' in h.get_text(strip=True).lower():
+            # Get the next sibling paragraph or div
+            sib = h.find_next_sibling(['p', 'div'])
+            if sib:
+                return sib.get_text(strip=True)
+    # Fallback: look for divs with class 'management'
+    div = soup.find('div', class_='management')
+    if div:
+        return div.get_text(strip=True)
+    return ""
 
 
 def parse_args():
@@ -456,6 +479,8 @@ def main():
             "matched_title": matched,
             "description": description if description else "⚠️ No description found yet.",
             "source": base_infos,
+            # <-- ADD THIS
+            "management": entry.get("management", "") if match else "",
         }
 
     # Remove temporary full listings
