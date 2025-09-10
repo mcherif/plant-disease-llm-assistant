@@ -25,6 +25,7 @@ from PIL import Image
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 from src.llm.rag_pipeline import RAGPipeline, RetrievalConfig
 import re
+import pandas as pd
 
 DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 
@@ -162,6 +163,7 @@ else:
 
 # Sidebar config
 st.sidebar.header("Settings")
+MODEL_DIR = st.sidebar.text_input("Model directory", "models/vit-finetuned")
 index_dir = st.sidebar.text_input("Index dir", "models/index/kb-faiss-bge")
 top_k = st.sidebar.slider("Top-k context", 1, 6, 3)
 retrieval_device = st.sidebar.selectbox("Device", ["cpu", "cuda"], index=0)
@@ -171,6 +173,17 @@ st.sidebar.caption(f"Judge/LLM model (env): {model_env}")
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     st.warning("OPENAI_API_KEY not set. Answers won’t work.", icon="⚠️")
+
+if st.sidebar.button("Show Dashboard"):
+    st.header("Feedback Dashboard")
+    try:
+        df = pd.read_json("data/feedback/feedback.jsonl", lines=True)
+        st.bar_chart(df["feedback"].value_counts())
+        st.line_chart(df.groupby("timestamp").size())
+        st.write("Recent feedback:", df.tail(10))
+        # Add more charts as needed (latency, retrieval count, etc.)
+    except Exception:
+        st.warning("No feedback data yet or error loading dashboard.")
 
 # RAG pipeline (re-init when settings change)
 cfg = RetrievalConfig(index_dir=index_dir, top_k=top_k,

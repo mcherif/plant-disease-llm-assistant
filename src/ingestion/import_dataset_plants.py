@@ -1,4 +1,3 @@
-import csv
 import re
 import requests
 from collections import defaultdict

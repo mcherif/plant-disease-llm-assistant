@@ -822,10 +822,6 @@ def refresh_descriptions(
 
             soup_d = _fetch_html(sess, disease_url) if disease_url else None
             # First try scoped extraction within the specific disease section (Approach 1)
-            summary = None
-            symptoms = None
-            cause = None
-            management = None
             if soup_d:
                 sc_sum, sc_sym, sc_cause, sc_mgmt = _extract_scoped_sections_from_pv_page(
                     soup_d, disease, max_sentences=max_sentences

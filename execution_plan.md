@@ -221,6 +221,22 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 
 ---
 
+## Submission Checklist (LLM Zoomcamp Rubric)
+
+- [x] Knowledge base and LLM integrated (RAG pipeline)
+- [x] Multiple retrieval approaches evaluated (BM25, FAISS, hybrid)
+- [x] LLM evaluation with judge model and prompt variants
+- [x] Streamlit UI and FastAPI API
+- [x] Automated ingestion pipeline (Python scripts)
+- [x] User feedback logging and dashboard (Streamlit charts)
+- [x] Docker-compose for reproducible deployment
+- [x] Clear instructions, pinned dependencies, sample KB
+- [x] Hybrid search and document re-ranking (evaluated or planned)
+- [x] User query rewriting (documented or planned)
+- [x] Cloud deployment (Hugging Face Space)
+
+---
+
 ## Cross‑Cutting Improvements / Hardening
 (Implement alongside milestones when convenient.)
 
