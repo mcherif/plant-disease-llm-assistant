@@ -1,3 +1,13 @@
+"""
+FastAPI backend for Plant Disease RAG Assistant.
+
+This module exposes a REST API for retrieval-augmented generation (RAG) over the plant disease knowledge base.
+- /health: Returns API and pipeline status, config, and metadata.
+- /rag: Accepts a user query and optional filters, runs retrieval and LLM answer generation, and returns sources, retrieved chunks, and latency.
+
+Use this API for programmatic access, integration with other apps, or as a backend for the Streamlit UI.
+To run locally: uvicorn src.interface.api:app --reload --port 8000
+"""
 import os
 import time
 from typing import Optional, List, Any, Dict

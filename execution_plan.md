@@ -221,7 +221,7 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 
 ---
 
-## Submission Checklist (LLM Zoomcamp Rubric)
+## Submission Checklist (LLM Zoomcamp Assessment)
 
 - [x] Knowledge base and LLM integrated (RAG pipeline)
 - [x] Multiple retrieval approaches evaluated (BM25, FAISS, hybrid)
@@ -233,7 +233,7 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 - [x] Clear instructions, pinned dependencies, sample KB
 - [x] Hybrid search and document re-ranking (evaluated or planned)
 - [x] User query rewriting (documented or planned)
-- [x] Cloud deployment (Hugging Face Space)
+- [ ] Cloud deployment (Hugging Face Space)
 
 ---
 
