@@ -1,4 +1,5 @@
 [tool.ruff]
 exclude = [
     "src/app_gradio.py",
+    "PlantVillage-Dataset",
 ]
