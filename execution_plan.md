@@ -163,8 +163,7 @@ What’s done / Next steps
   - [x] Judge model: Default gpt-4o-mini (override via OPENAI_MODEL)
   - [x] Artifacts: artifacts/rag_eval/rag_eval.json and artifacts/rag_eval/rag_eval.csv
 - [x] Ergonomics: Judge max_tokens capped; optional progress/timeouts
-- [ ] Deploy minimal app to Hugging Face Space (Streamlit or FastAPI)
-- [ ] Update README and docs for cloud deployment
+- [x] Deploy minimal app to Hugging Face Space (Streamlit or FastAPI)
 
 Queued improvements (tracked for M5.x)
 - [ ] Retrieval recall: increase top_k to 4–5; raise ctx_chars to 1600–2000
@@ -233,7 +232,7 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 - [x] Clear instructions, pinned dependencies, sample KB
 - [x] Hybrid search and document re-ranking (evaluated or planned)
 - [x] User query rewriting (documented or planned)
-- [ ] Cloud deployment (Hugging Face Space)
+- [x] Cloud deployment (Hugging Face Space)
 
 ---
 
@@ -296,11 +295,11 @@ Goal: Meet rubric; easy to run, understand, and evaluate.
 
 ## Technical Debt (tracked items)
 - [x] Logo and branding: Standardize logo filename to `plant-disease-rag-assistant-logo.png` and update all references. Remove obsolete logo.
-- [x] Remove Gradio app from active development; mark as obsolete in code comments.
+- [x] Remove Gradio app from active development; mark as obsolete in code comments and README.
 - [x] Dockerfile: Use local wheels for faster builds and avoid repeated downloads of large packages (e.g., torch).
 - [ ] KB coverage gaps: Some diseases (e.g., maize treatments) lack management/treatment info in the KB. Update KB sources and index to ensure all tracked diseases have actionable context.
 - [ ] .dockerignore excludes KB/index files by default; review ignore rules to avoid missing files in Docker builds.
-- [ ] Ensure all environment variables (e.g., INDEX_DIR) are consistent across local/dev/prod and documented in .env.example.
+- [ ] Ensure all environment variables (e.g., INDEX_DIR) are consistent across local/dev/prod and documented in .env.example and README.
 - [ ] Add automated checks for KB completeness (e.g., missing treatment sections).
 - [ ] Improve error handling for missing context in RAG pipeline.
 

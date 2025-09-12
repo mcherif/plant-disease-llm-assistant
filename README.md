@@ -171,8 +171,8 @@ See [docs/data_card.md](docs/data_card.md) for sources, build steps, and limitat
 
 ### Expanding Disease Coverage
 
-- Update seed pairs in `data/plantvillage_kb.json` (via `src/ingestion/refresh_kb_descriptions.py` or manual edit).
-- Extend normalization and relevance filters in `src/ingestion/build_kb.py`.
+- Update seed pairs in [`data/plantvillage_kb.json`](data/plantvillage_kb.json) (via [`src/ingestion/refresh_kb_descriptions.py`](src/ingestion/refresh_kb_descriptions.py) or manual edit).
+- Extend normalization and relevance filters in [`src/ingestion/build_kb.py`](src/ingestion/build_kb.py).
 - Rebuild KB and re-index retrieval store:
 ```powershell
 python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data/kb --min_tokens 50 --max_tokens 400 --overlap 80 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
