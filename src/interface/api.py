@@ -12,11 +12,16 @@ import os
 import time
 from typing import Optional, List, Any, Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from pydantic import BaseModel, Field
 
 from src.llm.rag_pipeline import RAGPipeline, RetrievalConfig
+from transformers import AutoImageProcessor, AutoModelForImageClassification
+from PIL import Image
 import torch
+import io
+import json
+from datetime import datetime
 
 # --- Config (env overrides) ---
 
@@ -31,6 +36,7 @@ def _auto_device():
 INDEX_DIR = os.getenv("INDEX_DIR", "models/index/kb-faiss-bge")
 RETRIEVAL_DEVICE = _auto_device()
 DEFAULT_TOP_K = int(os.getenv("TOP_K", "3"))
+MODEL_DIR = os.getenv("MODEL_DIR", "models/vit-finetuned")
 
 # Lazy global pipeline (built once)
 _rag_pipeline: Optional[RAGPipeline] = None
@@ -82,8 +88,26 @@ class RagResponse(BaseModel):
     top_k: int
 
 
+class FeedbackRequest(BaseModel):
+    query: str
+    answer: str
+    feedback: str  # e.g., "up", "down", "comment"
+    timestamp: str = None
+
+
 # --- App ---
 app = FastAPI(title="Plant Disease RAG API", version="0.1.0-skeleton")
+
+# GET /health
+# Example Response:
+# {
+#   "status": "ok",
+#   "index_dir": "models/index/kb-faiss-bge",
+#   "device": "cpu",
+#   "default_top_k": 3,
+#   "meta_docs": 123,
+#   "model_env": "gpt-4o-mini"
+# }
 
 
 @app.get("/health")
@@ -114,6 +138,20 @@ def _clean_title(t: str) -> str:
          .replace("â", "-")
          .strip()
     )
+
+# --- Example payloads for API endpoints ---
+
+# POST /rag
+# {
+#   "query": "How do I treat powdery mildew on tomato?",
+#   "plant": "tomato",
+#   "disease": "powdery mildew",
+#   "top_k": 3,
+#   "fusion": "rrf",
+#   "alpha": 0.5,
+#   "temperature": 0.0,
+#   "timeout": 30
+# }
 
 
 @app.post("/rag", response_model=RagResponse)
@@ -169,6 +207,74 @@ def rag_endpoint(req: RagRequest):
         latency_ms=latency_ms,
         top_k=len(retrieved),
     )
+
+# POST /api/classify
+# Form-data: file=<plant_leaf_image.jpg>
+# Response:
+# {
+#   "predictions": [
+#     {"label": "Powdery Mildew", "score": 0.92},
+#     {"label": "Leaf Spot", "score": 0.05},
+#     {"label": "Healthy", "score": 0.03}
+#   ]
+# }
+
+
+@app.post("/api/classify")
+async def classify_image(file: UploadFile = File(...)):
+    try:
+        image_bytes = await file.read()
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        processor = AutoImageProcessor.from_pretrained(MODEL_DIR)
+        model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.eval().to(device)
+        inputs = processor(images=image, return_tensors="pt")
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        with torch.no_grad():
+            logits = model(**inputs).logits
+            probs = torch.softmax(logits, dim=-1).squeeze(0).cpu()
+            topk = min(5, probs.shape[-1])
+            scores, idxs = torch.topk(probs, topk)
+        # Load label mapping
+        labels = {}
+        try:
+            with open(os.path.join(MODEL_DIR, "class_mapping.json"), "r", encoding="utf-8") as f:
+                name2idx = json.load(f)
+            labels = {int(v): k for k, v in name2idx.items()}
+        except Exception:
+            pass
+        results = [
+            {"label": labels.get(idx, f"class_{idx}"), "score": float(score)}
+            for score, idx in zip(scores.tolist(), idxs.tolist())
+        ]
+        return {"predictions": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# POST /api/feedback
+# {
+#   "query": "How do I treat powdery mildew on tomato?",
+#   "answer": "Use fungicides and remove infected leaves...",
+#   "feedback": "up",
+#   "timestamp": "2025-09-12T12:34:56Z"
+# }
+
+
+@app.post("/api/feedback")
+async def submit_feedback(feedback: FeedbackRequest):
+    feedback_data = feedback.dict()
+    if not feedback_data.get("timestamp"):
+        feedback_data["timestamp"] = datetime.utcnow().isoformat()
+    feedback_dir = "data/feedback"
+    os.makedirs(feedback_dir, exist_ok=True)
+    feedback_file = os.path.join(feedback_dir, "feedback.jsonl")
+    try:
+        with open(feedback_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(feedback_data) + "\n")
+        return {"status": "ok", "message": "Feedback recorded"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Optional local run: uvicorn src.interface.api:app --reload --port 8000

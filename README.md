@@ -19,6 +19,16 @@ app_port: 7860
 
 A Retrieval-Augmented Generation (RAG) assistant for plant disease diagnosis and guidance. It leverages classic (BM25) and vector-based retrieval, orchestrated with an LLM, to provide grounded answers from curated sources (docs, PDFs, web pages). The system supports image classification, document search, and conversational Q&A.
 
+---
+
+## 🚀 Try the App Online
+
+**[🌿 Plant Disease RAG Assistant on Hugging Face Spaces](https://huggingface.co/spaces/mcherif/Plant-Disease-RAG-Assistant)**
+
+No setup required—just open the link and start exploring!
+
+---
+
 ## Features
 
 - **Image classification**: Diagnose plant diseases from uploaded images.
@@ -26,7 +36,7 @@ A Retrieval-Augmented Generation (RAG) assistant for plant disease diagnosis and
 - **Conversational assistant**: Ask questions and receive context-aware, grounded answers.
 - **Hybrid retrieval**: Combines BM25 and vector search (FAISS) for robust results.
 - **APIs**: RESTful endpoints for integration and automation.
-- **Multi-UI support**: Gradio (main), Streamlit (optional), FastAPI backend.
+- **Multi-UI support**: Streamlit (main), FastAPI backend, Gradio (deprecated)
 
 ## Quick Start
 
@@ -34,8 +44,8 @@ A Retrieval-Augmented Generation (RAG) assistant for plant disease diagnosis and
 ```powershell
 docker compose up --build
 ```
-- Gradio UI: http://localhost:7860
 - Streamlit UI: http://localhost:8501
+- Gradio UI (deprecated): http://localhost:7860
 
 ### Plain Docker
 ```powershell
@@ -46,7 +56,7 @@ docker run -p 7860:7860 -p 8501:8501 -v ${PWD}:/code plant-llm-assistant
 ## Project Structure
 
 ```
-plant-disease-llm-assistant/
+plant-disease-rag-assistant/
 │
 ├── README.md                  # Project overview, setup, usage, and documentation links
 ├── docker-compose.yml         # Multi-container orchestration for API and UI services
@@ -57,7 +67,8 @@ plant-disease-llm-assistant/
 ├── data/
 │   ├── raw/                   # Unprocessed source datasets (images, docs, etc.)
 │   ├── processed/             # Cleaned/normalized data ready for ingestion
-│   └── kb/                    # Final knowledge base files (JSON, Parquet, etc.)
+│   ├── kb/                    # Final knowledge base files (JSON, Parquet, etc.)
+│   ├── sample_kb/             # Tiny sample KB for quick demos and cloud deployment
 │
 ├── notebooks/
 │   ├── 01_classifier_review.ipynb   # EDA and review of image classifier results
@@ -67,11 +78,12 @@ plant-disease-llm-assistant/
 ├── src/
 │   ├── classifier/            # Image classification models and utilities
 │   ├── ingestion/             # Scripts for scraping, cleaning, and building the KB
-│   │   ├── build_kb.py             # Main ingestion script: collects, chunks, normalizes, and deduplicates raw data from sources (PlantVillage, Wikipedia...) to build the initial KB.
-│   │   ├── refresh_kb_descriptions.py # Enrichment script: updates or fills in missing fields (description, symptoms, cause, etc.) in the KB by scraping PlantVillage pages.
-│   │   ├── validate_kb_urls.py     # Utility script for validating URLs in the KB.
+│   │   ├── build_kb.py                # Main ingestion script: collects, chunks, normalizes, and deduplicates raw data from sources (PlantVillage, Wikipedia...) to build the KB.
+│   │   ├── refresh_kb_descriptions.py # Enrichment script: updates or fills in missing fields in the KB by scraping PlantVillage pages.
+│   │   ├── import_dataset_plants.py   # Utility for importing and summarizing external datasets
+│   │   ├── validate_kb_urls.py        # Utility script for validating URLs in the KB.
 │   │   ├── scrape_plantvillage_infos.py # Scraper for PlantVillage 'infos' pages, used for initial disease/crop info extraction.
-│   │   └── ...                     # Other helpers/utilities for KB construction and cleaning.
+│   │   └── ...                        # Other helpers/utilities for KB construction and cleaning.
 │   ├── retrieval/             # BM25, FAISS, and hybrid retrieval logic
 │   ├── llm/                   # RAG pipeline, LLM integration, and prompt logic
 │   ├── monitoring/            # Logging, metrics, and health checks
@@ -96,12 +108,22 @@ plant-disease-llm-assistant/
 
 ## API Endpoints
 
-- **Image Classification**: `/api/classify` (POST, image upload)
-- **Document Search**: `/api/search` (POST, query text)
-- **Conversational Q&A**: `/api/ask` (POST, question text)
-- **Feedback Collection**: `/api/feedback` (POST, feedback data)
+- **GET `/health`**  
+  Returns API and pipeline status, configuration, and metadata (index path, device, top_k, document count, model info).
 
-See [docs/api_reference.md](docs/api_reference.md) for full details.
+- **POST `/rag`**  
+  Accepts a user query and optional filters (plant, disease, top_k, fusion, alpha, temperature, timeout).  
+  Runs retrieval and LLM answer generation, returning the answer, sources, retrieved chunks, and latency.
+
+- **POST `/api/classify`**  
+  Accepts an image file upload (plant leaf).  
+  Runs image classification using the ViT model and returns the top predicted disease labels and scores.
+
+- **POST `/api/feedback`**  
+  Accepts feedback about answers (thumbs up/down, comments, etc.) as JSON.  
+  Stores feedback for monitoring and dashboarding.
+
+Example payloads for each endpoint are available in the code comments.
 
 ## Usage
 
@@ -114,11 +136,6 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-- Run Gradio UI:
-```powershell
-python src/interface/app_gradio.py
-```
-
 - Run Streamlit UI:
 ```powershell
 streamlit run src/interface/streamlit_app.py
@@ -129,11 +146,24 @@ streamlit run src/interface/streamlit_app.py
 uvicorn src.interface.api:app --host 0.0.0.0 --port 8000
 ```
 
+- Run Gradio UI (deprecated, for intermediate development demos only):
+```powershell
+python src/interface/app_gradio.py
+```
+
 ### Web UIs
 
-- **Gradio**: Main interface for image classification and Q&A.
-- **Streamlit**: Alternative UI for document search and Q&A.
+- **Streamlit**: Main interface UI for image classification, RAG assisted search.
 - See [docs/STREAMLIT.md](docs/STREAMLIT.md) for details.
+
+## Deployment Options
+
+This project delivers:
+- **A ready-to-use Hugging Face Spaces app** powered by Streamlit for interactive plant disease diagnosis and Q&A.  
+  [🌿 Try it online here.](https://huggingface.co/spaces/mcherif/Plant-Disease-RAG-Assistant)
+- **A FastAPI backend** exposing RESTful endpoints for programmatic access, integration, and automation.
+
+You can use the Streamlit app directly on Hugging Face, or deploy the FastAPI service for custom workflows and integrations.
 
 ## Dataset
 
@@ -145,7 +175,7 @@ See [docs/data_card.md](docs/data_card.md) for sources, build steps, and limitat
 - Extend normalization and relevance filters in `src/ingestion/build_kb.py`.
 - Rebuild KB and re-index retrieval store:
 ```powershell
-python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb --min_tokens 50 --max_tokens 400 --overlap 80 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
+python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data/kb --min_tokens 50 --max_tokens 400 --overlap 80 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
 ```
 
 ## Retrieval
