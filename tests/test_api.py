@@ -1,6 +1,4 @@
-import os
 import io
-import pytest
 from fastapi.testclient import TestClient
 from src.interface.api import app
 
@@ -31,17 +29,19 @@ def test_rag():
 
 def test_classify(monkeypatch):
     from PIL import Image
-    import numpy as np
     import torch
 
     def dummy_from_pretrained(*args, **kwargs):
         print("Dummy model loaded")
 
         class DummyModel:
-            def eval(self): print("DummyModel.eval()"); return self
+            def eval(self):
+                print("DummyModel.eval()")
+                return self
 
-            def to(self, device): print(
-                f"DummyModel.to({device})"); return self
+            def to(self, device):
+                print(f"DummyModel.to({device})")
+                return self
 
             def __call__(self, **inputs):
                 print(f"DummyModel.__call__ inputs: {inputs}")

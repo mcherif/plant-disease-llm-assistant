@@ -12,7 +12,7 @@ import os
 import time
 from typing import Optional, List, Any, Dict
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
 
 from src.llm.rag_pipeline import RAGPipeline, RetrievalConfig
