@@ -32,7 +32,7 @@ DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 LOGO_PATH = "images/plant-disease-rag-assistant-logo.png"
 
 st.set_page_config(page_title="Plant Disease RAG Assistant", layout="wide")
-st.sidebar.image(LOGO_PATH, use_container_width=True)
+st.sidebar.image(LOGO_PATH, width="stretch")
 st.title("Plant Disease RAG Assistant")
 
 # Sidebar config (move this block up, before any function that uses MODEL_DIR)
@@ -157,8 +157,7 @@ else:
         "Upload a plant image", type=["jpg", "jpeg", "png"])
     if uploaded is not None:
         image = Image.open(uploaded).convert("RGB")
-        st.image(image, caption="Uploaded image",
-                 use_container_width=False, width=300)
+        st.image(image, caption="Uploaded image", width=300)
 
         with st.spinner("Loading model..."):
             model, processor, model_device = load_model_and_processor()
@@ -245,19 +244,65 @@ if run:
         except Exception as e:
             st.error(f"RAG error: {e}")
         else:
-            st.subheader("Answer")
-            st.write(res.get("answer", ""))
-            retrieved = res.get("retrieved", []) or []
-            if retrieved:
-                st.subheader("Sources")
-                for i, doc in enumerate(retrieved, start=1):
-                    meta = doc.get("meta", {})
-                    title = meta.get("title") or meta.get(
-                        "doc_id") or f"Doc {i}"
-                    url = meta.get("url")
-                    with st.expander(f"[{i}] {title}"):
-                        if url:
-                            st.markdown(f"[{url}]({url})")
-                        st.write(meta.get("text", "")[:1200])
-            else:
-                st.info("No sources retrieved.")
+            st.session_state["last_answer"] = res.get("answer", "")
+            st.session_state["last_question"] = q
+            st.session_state["last_plant"] = plant_norm
+            st.session_state["last_disease"] = disease_norm
+            st.session_state["last_sources"] = res.get("retrieved", [])
+            st.session_state["feedback_submitted"] = False
+
+# Always show the answer and feedback form if available
+if st.session_state.get("last_answer"):
+    st.subheader("Answer")
+    st.write(st.session_state["last_answer"])
+    retrieved = st.session_state.get("last_sources", []) or []
+    if retrieved:
+        st.subheader("Sources")
+        for i, doc in enumerate(retrieved, start=1):
+            meta = doc.get("meta", {})
+            title = meta.get("title") or meta.get("doc_id") or f"Doc {i}"
+            url = meta.get("url")
+            with st.expander(f"[{i}] {title}"):
+                if url:
+                    st.markdown(f"[{url}]({url})")
+                st.write(meta.get("text", "")[:1200])
+    else:
+        st.info("No sources retrieved.")
+
+    # Feedback form
+    if "feedback_submitted" not in st.session_state:
+        st.session_state["feedback_submitted"] = False
+
+    if not st.session_state["feedback_submitted"]:
+        st.subheader("Your Feedback")
+        col_fb1, col_fb2 = st.columns([1, 4])
+        with col_fb1:
+            satisfaction = st.radio(
+                "Was this answer helpful?",
+                ["👍 Yes", "👎 No"],
+                horizontal=True,
+                key="satisfaction_radio"
+            )
+        with col_fb2:
+            user_comment = st.text_area(
+                "Additional comments (optional)",
+                key="user_comment_area"
+            )
+        if st.button("Submit Feedback", key="submit_feedback_btn"):
+            import datetime
+            feedback_entry = {
+                "timestamp": datetime.datetime.now().isoformat(),
+                "question": st.session_state["last_question"],
+                "plant": st.session_state["last_plant"],
+                "disease": st.session_state["last_disease"],
+                "answer": st.session_state["last_answer"],
+                "satisfaction": satisfaction,
+                "comment": user_comment
+            }
+            os.makedirs("data/feedback", exist_ok=True)
+            with open("data/feedback/feedback.jsonl", "a", encoding="utf-8") as f:
+                f.write(json.dumps(feedback_entry, ensure_ascii=False) + "\n")
+            st.session_state["feedback_submitted"] = True
+            st.success("Thank you for your feedback!")
+    else:
+        st.info("Feedback already submitted. Thank you!")
